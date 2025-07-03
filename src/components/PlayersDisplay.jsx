@@ -7,6 +7,8 @@ export default function PlayersDisplay({ players, groups, onUpdateGroups, curren
 
   const getPlayerById = (id) => players.find((p) => p.id === id);
 
+
+  
   const handleDrop = (groupKey) => {
     if (!draggedId) return;
 
