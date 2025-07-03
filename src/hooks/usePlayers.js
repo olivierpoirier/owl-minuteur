@@ -26,6 +26,11 @@ export default function usePlayers(roomId) {
         console.count("🌀 syncPlayers called");
 
         await waitUntilReady();
+        await OBR.scene.ready;
+        
+        const sceneMeta = await OBR.scene.getMetadata();
+        console.log("🎬 Scene metadata:", sceneMeta);
+
         const currentPlayers = await OBR.party.getPlayers();
         console.log("👥 OBR Players:", currentPlayers);
 
