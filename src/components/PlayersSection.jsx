@@ -9,6 +9,10 @@ export default function PlayersSection({ roomId }) {
   const { groups, updateGroups } = useRoomGroups(roomId);
   const currentUserId = useOwlbearPlayerId();
 
+  console.log("🥷 Players :", players);
+  console.log("🥷 groups :", groups);
+  console.log("🥷 currentUserId :", currentUserId);
+  
   if (!currentUserId) return null; // ou un petit loader facultatif
 
   return (

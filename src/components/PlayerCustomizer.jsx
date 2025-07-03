@@ -8,6 +8,13 @@ export default function PlayerCustomizer({ roomId }) {
   const [bg, setBg] = useState("#001f1f");
   const [text, setText] = useState("#ffffff");
 
+  console.log("playerId", playerId);
+  console.log("playerId data", data);
+  console.log("color", color);
+  console.log("bg", bg);
+  console.log("text", text);
+  
+
   useEffect(() => {
     if (data) {
       setColor(data.color || "#00ffff");
