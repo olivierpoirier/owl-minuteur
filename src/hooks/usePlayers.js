@@ -13,7 +13,7 @@ export default function usePlayers(roomId) {
   const [players, setPlayers] = useState([]);
   const intervalRef = useRef(null);
   const playersRef = useRef([]);
-  const INACTIVITY_THRESHOLD = 5 * 60 * 1000;
+  const INACTIVITY_THRESHOLD = 5 * 60 * 1000; // 5 minutes
 
   useEffect(() => {
     if (!roomId) return;
@@ -21,49 +21,54 @@ export default function usePlayers(roomId) {
     const roomRef = doc(db, "rooms", roomId);
 
     const syncPlayers = async () => {
-      const currentPlayers = await OBR.players.getPlayers();
-      const roomSnap = await getDoc(roomRef);
-      const data = roomSnap.exists() ? roomSnap.data() : {};
-      const savedPlayers = data.players || [];
+      try {
+        const currentPlayers = await OBR.party.getPlayers(); // ✅ Utiliser .party au lieu de .players
 
-      const savedMap = Object.fromEntries(
-        savedPlayers
-          .filter((p) => p && typeof p.id === "string") // filtre les objets valides
-          .map((p) => [p.id, p])
-      );
+        const roomSnap = await getDoc(roomRef);
+        const data = roomSnap.exists() ? roomSnap.data() : {};
+        const savedPlayers = data.players || [];
 
-      const now = Date.now();
+        const savedMap = Object.fromEntries(
+          savedPlayers
+            .filter((p) => p && typeof p.id === "string")
+            .map((p) => [p.id, p])
+        );
 
-      const updatedPlayers = { ...savedMap };
-      for (const id in updatedPlayers) {
-        updatedPlayers[id].status = "inactive";
-      }
+        const now = Date.now();
 
-      currentPlayers.forEach(p => {
-        updatedPlayers[p.id] = {
-          id: p.id,
-          name: p.name,
-          color: p.color,
-          role: p.role,
-          status: "active",
-          lastSeen: now,
-        };
-      });
-
-      const updatedArray = Object.values(updatedPlayers);
-
-      await updateDoc(roomRef, { players: updatedArray }).catch(async (err) => {
-        if (err.code === "not-found") {
-          await setDoc(roomRef, { players: updatedArray });
+        const updatedPlayers = { ...savedMap };
+        for (const id in updatedPlayers) {
+          updatedPlayers[id].status = "inactive";
         }
-      });
+
+        currentPlayers.forEach((p) => {
+          updatedPlayers[p.id] = {
+            id: p.id,
+            name: p.name,
+            color: p.color,
+            role: p.role,
+            status: "active",
+            lastSeen: now,
+          };
+        });
+
+        const updatedArray = Object.values(updatedPlayers);
+
+        await updateDoc(roomRef, { players: updatedArray }).catch(async (err) => {
+          if (err.code === "not-found") {
+            await setDoc(roomRef, { players: updatedArray });
+          }
+        });
+      } catch (err) {
+        console.error("Erreur dans syncPlayers :", err);
+      }
     };
 
     let unsubscribeOBR = null;
 
     OBR.onReady(() => {
       syncPlayers();
-      unsubscribeOBR = OBR.players.onChange(syncPlayers);
+      unsubscribeOBR = OBR.party.onChange(syncPlayers); // ✅ .party.onChange
     });
 
     const unsubSnapshot = onSnapshot(roomRef, (snap) => {
@@ -78,7 +83,7 @@ export default function usePlayers(roomId) {
       const now = Date.now();
       const current = playersRef.current;
 
-      const inactivePlayers = current.map(p => {
+      const inactivePlayers = current.map((p) => {
         const isInactive = p.lastSeen && now - p.lastSeen > INACTIVITY_THRESHOLD;
         return isInactive && p.status === "active"
           ? { ...p, status: "inactive" }
