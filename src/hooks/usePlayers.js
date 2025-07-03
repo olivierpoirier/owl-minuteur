@@ -2,8 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import {
   doc,
   onSnapshot,
-  updateDoc,
   getDoc,
+  updateDoc,
   setDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
@@ -23,27 +23,35 @@ export default function usePlayers(roomId) {
 
     const syncPlayers = async () => {
       try {
+        console.count("🌀 syncPlayers called");
+
+        await waitUntilReady();
         const currentPlayers = await OBR.party.getPlayers();
+        console.log("👥 OBR Players:", currentPlayers);
+
         const roomSnap = await getDoc(roomRef);
         const data = roomSnap.exists() ? roomSnap.data() : {};
+
+        if (!roomSnap.exists()) {
+          console.warn("📁 La room n'existe pas encore dans Firestore. Elle va être créée.");
+        }
+
         const savedPlayers = Array.isArray(data.players) ? data.players : [];
+        console.log("🗃️ Players existants dans Firestore:", savedPlayers);
 
-        const savedMap = Object.fromEntries(
-          savedPlayers
-            .filter(p => typeof p === "object" && p.id)
-            .map(p => [p.id, p])
-        );
-
+        const savedMap = Object.fromEntries(savedPlayers.map(p => [p.id, p]));
         const now = Date.now();
         const updatedPlayers = { ...savedMap };
 
+        // Marquer tous comme inactifs
         for (const id in updatedPlayers) {
           updatedPlayers[id].status = "inactive";
         }
 
+        // Mettre à jour ou ajouter les joueurs actifs
         currentPlayers.forEach((p) => {
           updatedPlayers[p.id] = {
-            ...updatedPlayers[p.id], // garde couleurs Firestore
+            ...updatedPlayers[p.id],
             id: p.id,
             name: p.name,
             color: p.color,
@@ -54,15 +62,41 @@ export default function usePlayers(roomId) {
         });
 
         const updatedArray = Object.values(updatedPlayers);
+        console.log("🔄 Players à écrire dans Firestore:", updatedArray);
+
+        // Groupes
+        const waitingGroup = new Set(data.waitingGroup || []);
+        const playingGroup = new Set(data.playingGroup || []);
+        const inactiveGroup = new Set(data.inactiveGroup || []);
+
+        currentPlayers.forEach((p) => {
+          if (
+            !waitingGroup.has(p.id) &&
+            !playingGroup.has(p.id) &&
+            !inactiveGroup.has(p.id)
+          ) {
+            console.log(`🆕 Nouveau joueur ajouté au waitingGroup: ${p.name} (${p.id})`);
+            waitingGroup.add(p.id);
+          }
+        });
+
+        const newData = {
+          players: updatedArray,
+          waitingGroup: Array.from(waitingGroup),
+          playingGroup: Array.from(playingGroup),
+          inactiveGroup: Array.from(inactiveGroup),
+        };
+
+        console.log("📦 Données finales à écrire dans Firestore:", newData);
 
         if (!roomSnap.exists()) {
-          await setDoc(roomRef, { players: updatedArray });
+          await setDoc(roomRef, newData);
         } else {
-          await updateDoc(roomRef, { players: updatedArray });
+          await updateDoc(roomRef, newData);
         }
 
       } catch (err) {
-        console.error("❌ syncPlayers:", err);
+        console.error("❌ syncPlayers error:", err);
       }
     };
 
@@ -78,6 +112,7 @@ export default function usePlayers(roomId) {
         );
 
         if (JSON.stringify(newPlayers) !== JSON.stringify(current)) {
+          console.log("⏳ Inactivité détectée, mise à jour des statuts:", newPlayers);
           await updateDoc(roomRef, { players: newPlayers });
         }
       }, 30000);
@@ -85,13 +120,13 @@ export default function usePlayers(roomId) {
 
     const unsub = onSnapshot(roomRef, (snap) => {
       const data = snap.exists() ? snap.data() : {};
+      console.log("📡 Snapshot live reçu:", data);
       setPlayers(data.players || []);
       playersRef.current = data.players || [];
     });
 
     const init = async () => {
-      await waitUntilReady();
-      await OBR.scene.ready;
+      console.log("🚀 Initialisation de usePlayers avec roomId:", roomId);
       await syncPlayers();
       OBR.party.onChange(syncPlayers);
       startInactivityCheck();

@@ -2,9 +2,10 @@
 import OBR from "@owlbear-rodeo/sdk";
 
 /**
- * Utilitaire pour attendre que OBR soit prêt avec syntaxe `await`
+ * Attendre que OBR soit prêt, peu importe si on appelle après ou avant l'initialisation
  */
 export function waitUntilReady() {
+  if (OBR.isReady) return Promise.resolve();
   return new Promise((resolve) => {
     OBR.onReady(resolve);
   });
