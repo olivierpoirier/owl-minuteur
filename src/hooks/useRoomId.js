@@ -7,7 +7,7 @@ export default function useRoomId() {
   useEffect(() => {
     const getRoomId = async () => {
       try {
-        const id = OBR.room.id
+        const id = await OBR.room.id
         setRoomId(id)
       } catch (err) {
         console.error("Erreur lors de la récupération de l'ID de la salle :", err)

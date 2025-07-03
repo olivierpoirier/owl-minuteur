@@ -1,12 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import usePlayerData from "../hooks/usePlayerData";
 import { updatePlayerData } from "../utils/updatePlayerData";
 
 export default function PlayerCustomizer({ roomId }) {
   const { playerId, data } = usePlayerData(roomId);
-  const [color, setColor] = useState(data?.color || "#00ffff");
-  const [bg, setBg] = useState(data?.backgroundColor || "#001f1f");
-  const [text, setText] = useState(data?.textColor || "#ffffff");
+  const [color, setColor] = useState("#00ffff");
+  const [bg, setBg] = useState("#001f1f");
+  const [text, setText] = useState("#ffffff");
+
+  useEffect(() => {
+    if (data) {
+      setColor(data.color || "#00ffff");
+      setBg(data.backgroundColor || "#001f1f");
+      setText(data.textColor || "#ffffff");
+    }
+  }, [data]);
+
 
   const handleSave = async () => {
     await updatePlayerData(roomId, playerId, {

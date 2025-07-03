@@ -7,7 +7,7 @@ export default function useOwlbearPlayerId() {
   useEffect(() => {
     OBR.onReady(async () => {
       try {
-        const id = OBR.player.id;
+        const id = await OBR.player.id; // ✅ ATTENDRE LA PROMESSE
         setPlayerId(id);
       } catch (err) {
         console.error("Erreur récupération player ID :", err);
