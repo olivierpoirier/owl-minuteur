@@ -13,10 +13,11 @@ export default function usePlayers(roomId) {
   const [players, setPlayers] = useState([]);
   const intervalRef = useRef(null);
   const playersRef = useRef([]);
-  const INACTIVITY_THRESHOLD = 5 * 60 * 1000;
+
 
   useEffect(() => {
     if (!roomId) return;
+    const INACTIVITY_THRESHOLD = 5 * 60 * 1000;
     const roomRef = doc(db, "rooms", roomId);
 
     const syncPlayers = async () => {
@@ -105,7 +106,7 @@ export default function usePlayers(roomId) {
       clearInterval(intervalRef.current);
       if (unsubscribeOBR) unsubscribeOBR();
     };
-  }, [INACTIVITY_THRESHOLD, roomId]);
+  }, [roomId]);
 
   return players;
 }
