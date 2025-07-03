@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import OBR from "@owlbear-rodeo/sdk";
+import { waitUntilReady } from "../utils/obrHelpers";
 
 export default function useRoomId() {
   const [roomId, setRoomId] = useState(null);
@@ -7,7 +8,7 @@ export default function useRoomId() {
   useEffect(() => {
     const fetchRoomId = async () => {
       try {
-        await OBR.onReady();
+        await waitUntilReady();
         const id = await OBR.room.id;
         setRoomId(id);
       } catch (err) {

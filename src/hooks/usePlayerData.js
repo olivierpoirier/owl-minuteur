@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import OBR from "@owlbear-rodeo/sdk";
+import { waitUntilReady } from "../utils/obrHelpers";
 
 export default function usePlayerData(roomId) {
   const [playerId, setPlayerId] = useState(null);
@@ -10,7 +11,7 @@ export default function usePlayerData(roomId) {
   useEffect(() => {
     const getId = async () => {
       try {
-        await OBR.onReady();
+        await waitUntilReady();
         const id = await OBR.player.id;
         setPlayerId(id);
       } catch (err) {
