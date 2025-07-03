@@ -8,7 +8,7 @@ import { initializeRoomIfNeeded } from "./utils/initializeRoomIfNeeded";
 
 export default function TimerPage() {
   let roomId = useRoomId();
-     roomId = "1"
+  //   roomId = "1"
   const { timer, updateTimer } = useTimerLive(roomId);
 
   useEffect(() => {
