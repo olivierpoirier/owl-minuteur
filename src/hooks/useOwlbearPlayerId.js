@@ -7,17 +7,17 @@ export default function useOwlbearPlayerId() {
   useEffect(() => {
     let isMounted = true;
 
-    OBR.onReady(async () => {
+    const getId = async () => {
       try {
+        await OBR.onReady();
         const id = await OBR.player.id;
-        if (isMounted) {
-          setPlayerId(id);
-          console.log("🧠 Owlbear Player ID:", id);
-        }
+        if (isMounted) setPlayerId(id);
       } catch (err) {
-        console.error("❌ Erreur récupération player ID :", err);
+        console.error("❌ useOwlbearPlayerId:", err);
       }
-    });
+    };
+
+    getId();
 
     return () => {
       isMounted = false;

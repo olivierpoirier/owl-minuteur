@@ -13,127 +13,96 @@ export default function useTimerLive(roomId) {
   const [isGM, setIsGM] = useState(false);
   const intervalRef = useRef(null);
   const lastSync = useRef(Date.now());
-  const isOwnerRef = useRef(false);
 
-  // 🔎 On récupère si l'utilisateur est un GM
   useEffect(() => {
-    OBR.onReady(async () => {
+    const init = async () => {
+      await OBR.onReady();
       const role = await OBR.player.getRole();
       setIsGM(role === "GM");
-    });
+    };
+
+    init();
   }, []);
 
-useEffect(() => {
-  if (!roomId || typeof roomId !== "string") return;
-
-  const ref = doc(db, "rooms", roomId);
-  
-  const startLocalTimer = () => {
-    stopLocalTimer();
-    intervalRef.current = setInterval(() => {
-      setTimer((prev) => {
-        if (!prev) return null;
-        const newTime = prev.timeLeft - 1;
-
-
-        if (Date.now() - lastSync.current >= 1000 && newTime > 0) {
-          updateDoc(ref, {
-            "timer.timeLeft": Math.max(newTime, 0),
-            "timer.lastUpdated": serverTimestamp(),
-          });
-          lastSync.current = Date.now();
-        }
-
-        if (newTime <= 0) {
-          stopLocalTimer();
-          updateDoc(ref, {
-            "timer.timeLeft": 0,
-            "timer.isRunning": false,
-            "timer.lastUpdated": serverTimestamp(),
-          });
-          return { ...prev, timeLeft: 0, isRunning: false };
-        }
-
-        return { ...prev, timeLeft: Math.max(newTime, 0) };
-      });
-    }, 1000);
-  };
-  
-  const unsub = onSnapshot(ref, async (snap) => {
-    if (!snap.exists()) return;
-    const data = snap.data();
-    
-    setTimer(data.timer);
-    /*
-    const myId = await OBR.player.id;
-    isOwnerRef.current = data.timerOwnerId === myId;
-    */
-   
-    if (data.timer.isRunning) {
-      startLocalTimer(data.timer.timeLeft);
-    } else {
-      stopLocalTimer();
-    }
-    
-
-  });
-
-  return () => {
-    unsub();
-    stopLocalTimer();
-  };
-}, [roomId, isGM]);
-
-
-  const stopLocalTimer = () => {
-    const interval = intervalRef.current;
-    if (interval) clearInterval(interval);
-    intervalRef.current = null;
-  };
-
-  /*
-  // 🔒 Seul un GM peut mettre à jour le timer
-  const updateTimer = async (fields) => {
-    
-    if (!isGM) {
-      console.warn("⛔ Seuls les GM peuvent contrôler le timer");
-      return;
-    }
-    
-    const ref = doc(db, "rooms", roomId);
-    //const myId = await OBR.player.id;
-    console.log("REF",ref);
-    console.log("FILED", fields);
-    
-    
-    await updateDoc(ref, {
-      timer: {
-        ...fields,
-        lastUpdated: serverTimestamp(),
-      },
-    });
-  };
-*/
-
-  const updateTimer = async (fields) => {
+  useEffect(() => {
     if (!roomId) return;
-    if (timer.timeLeft <= 0 && fields.isRunning) return;
-    if (fields.timeLeft >= 3600) fields.timeLeft = 3600;
-    if (timer.timeLeft === fields.timeLeft) return;
 
     const ref = doc(db, "rooms", roomId);
-  
-    // Transforme { isRunning: true, timeLeft: 123 } en { "timer.isRunning": true, "timer.timeLeft": 123 }
-    const dotNotatedFields = Object.fromEntries(
-      Object.entries(fields).map(([key, value]) => [`timer.${key}`, value])
+
+    const stopLocalTimer = () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+
+    const startLocalTimer = () => {
+      if (intervalRef.current) return;
+
+      intervalRef.current = setInterval(() => {
+        setTimer((prev) => {
+          if (!prev) return null;
+          const newTime = prev.timeLeft - 1;
+
+          if (Date.now() - lastSync.current >= 1000 && newTime > 0) {
+            updateDoc(ref, {
+              "timer.timeLeft": newTime,
+              "timer.lastUpdated": serverTimestamp(),
+            });
+            lastSync.current = Date.now();
+          }
+
+          if (newTime <= 0) {
+            stopLocalTimer();
+            updateDoc(ref, {
+              "timer.timeLeft": 0,
+              "timer.isRunning": false,
+              "timer.lastUpdated": serverTimestamp(),
+            });
+            return { ...prev, timeLeft: 0, isRunning: false };
+          }
+
+          return { ...prev, timeLeft: newTime };
+        });
+      }, 1000);
+    };
+
+    const unsub = onSnapshot(ref, (snap) => {
+      const data = snap.exists() ? snap.data() : {};
+      const t = data.timer;
+      if (!t) return;
+
+      setTimer(t);
+      t.isRunning ? startLocalTimer(t.timeLeft) : stopLocalTimer();
+    });
+
+    return () => {
+      unsub();
+      stopLocalTimer();
+    };
+  }, [roomId]);
+
+  const updateTimer = async (fields) => {
+    if (!roomId || !timer) return;
+
+    const next = {
+      timeLeft: fields.timeLeft ?? timer.timeLeft,
+      isRunning: fields.isRunning ?? timer.isRunning,
+    };
+
+    const noChange = next.timeLeft === timer.timeLeft && next.isRunning === timer.isRunning;
+    if (noChange) return;
+
+    const ref = doc(db, "rooms", roomId);
+    const dotFields = Object.fromEntries(
+      Object.entries(fields).map(([k, v]) => [`timer.${k}`, v])
     );
 
     await updateDoc(ref, {
-      ...dotNotatedFields,
+      ...dotFields,
       "timer.lastUpdated": serverTimestamp(),
     });
   };
-
 
   return { timer, updateTimer, isGM };
 }

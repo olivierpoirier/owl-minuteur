@@ -7,29 +7,26 @@ export default function usePlayerData(roomId) {
   const [playerId, setPlayerId] = useState(null);
   const [data, setData] = useState(null);
 
-  // 🔍 Récupération de l'ID du joueur connecté à Owlbear
   useEffect(() => {
-    OBR.onReady(async () => {
+    const getId = async () => {
       try {
+        await OBR.onReady();
         const id = await OBR.player.id;
         setPlayerId(id);
       } catch (err) {
-        console.error("❌ Erreur lors de la récupération du playerId :", err);
+        console.error("❌ usePlayerData:", err);
       }
-    });
+    };
+
+    getId();
   }, []);
 
-  // 🔁 Écoute des données personnalisées du joueur dans Firestore
   useEffect(() => {
     if (!roomId || !playerId) return;
 
     const ref = doc(db, "rooms", roomId, "players", playerId);
     const unsub = onSnapshot(ref, (snap) => {
-      if (snap.exists()) {
-        setData(snap.data());
-      } else {
-        console.warn(`⚠️ Aucun document trouvé pour /rooms/${roomId}/players/${playerId}`);
-      }
+      setData(snap.exists() ? snap.data() : null);
     });
 
     return () => unsub();

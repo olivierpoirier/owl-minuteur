@@ -13,11 +13,8 @@ export default function useRoomGroups(roomId) {
     if (!roomId) return;
 
     const ref = doc(db, "rooms", roomId);
-
     const unsub = onSnapshot(ref, (snap) => {
-      if (!snap.exists()) return;
-      const data = snap.data();
-
+      const data = snap.exists() ? snap.data() : {};
       setGroups({
         playingGroup: data.playingGroup || [],
         waitingGroup: data.waitingGroup || [],
@@ -28,7 +25,6 @@ export default function useRoomGroups(roomId) {
     return () => unsub();
   }, [roomId]);
 
-  // 🔄 Mise à jour des groupes dans Firestore
   const updateGroups = async (newGroups) => {
     const ref = doc(db, "rooms", roomId);
     await updateDoc(ref, {

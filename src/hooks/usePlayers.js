@@ -1,49 +1,43 @@
 import { useEffect, useState, useRef } from "react";
-import OBR from "@owlbear-rodeo/sdk";
 import {
   doc,
   onSnapshot,
   updateDoc,
   getDoc,
-  setDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import OBR from "@owlbear-rodeo/sdk";
 
 export default function usePlayers(roomId) {
   const [players, setPlayers] = useState([]);
   const intervalRef = useRef(null);
   const playersRef = useRef([]);
 
-
   useEffect(() => {
     if (!roomId) return;
+
     const INACTIVITY_THRESHOLD = 5 * 60 * 1000;
     const roomRef = doc(db, "rooms", roomId);
 
     const syncPlayers = async () => {
       try {
         const currentPlayers = await OBR.party.getPlayers();
-        console.log("👥 Joueurs détectés :", currentPlayers);
-
         const roomSnap = await getDoc(roomRef);
         const data = roomSnap.exists() ? roomSnap.data() : {};
         const savedPlayers = data.players || [];
 
         const savedMap = Object.fromEntries(
-          savedPlayers
-            .filter((p) => p && typeof p.id === "string")
-            .map((p) => [p.id, p])
+          savedPlayers.map((p) => [p.id, p])
         );
 
         const now = Date.now();
-        const updatedPlayers = { ...savedMap };
 
-        for (const id in updatedPlayers) {
-          updatedPlayers[id].status = "inactive";
+        for (const id in savedMap) {
+          savedMap[id].status = "inactive";
         }
 
         currentPlayers.forEach((p) => {
-          updatedPlayers[p.id] = {
+          savedMap[p.id] = {
             id: p.id,
             name: p.name,
             color: p.color,
@@ -53,58 +47,49 @@ export default function usePlayers(roomId) {
           };
         });
 
-        const updatedArray = Object.values(updatedPlayers);
-
-        await updateDoc(roomRef, { players: updatedArray }).catch(async (err) => {
-          if (err.code === "not-found") {
-            await setDoc(roomRef, { players: updatedArray });
-          }
-        });
+        const updatedArray = Object.values(savedMap);
+        await updateDoc(roomRef, { players: updatedArray });
       } catch (err) {
-        console.error("❌ Erreur syncPlayers :", err);
+        console.error("❌ syncPlayers:", err);
       }
     };
 
-    let unsubscribeOBR = null;
+    const unsub = onSnapshot(roomRef, (snap) => {
+      const data = snap.exists() ? snap.data() : {};
+      setPlayers(data.players || []);
+      playersRef.current = data.players || [];
+    });
 
-    OBR.onReady(async () => {
-      await OBR.scene.ready; // ✅ attend que la scène soit prête
-      console.log("🎬 Scène prête");
+    const startInactivityCheck = () => {
+      intervalRef.current = setInterval(async () => {
+        const now = Date.now();
+        const current = playersRef.current;
 
+        const newPlayers = current.map((p) =>
+          p.lastSeen && now - p.lastSeen > INACTIVITY_THRESHOLD && p.status === "active"
+            ? { ...p, status: "inactive" }
+            : p
+        );
+
+        if (JSON.stringify(newPlayers) !== JSON.stringify(current)) {
+          await updateDoc(roomRef, { players: newPlayers });
+        }
+      }, 30000);
+    };
+
+    const init = async () => {
+      await OBR.onReady();
+      await OBR.scene.ready;
       syncPlayers();
-      unsubscribeOBR = OBR.party.onChange(syncPlayers);
-    });
+      OBR.party.onChange(syncPlayers);
+      startInactivityCheck();
+    };
 
-    const unsubSnapshot = onSnapshot(roomRef, (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        setPlayers(data.players || []);
-        playersRef.current = data.players || [];
-      }
-    });
-
-    intervalRef.current = setInterval(async () => {
-      const now = Date.now();
-      const current = playersRef.current;
-
-      const inactivePlayers = current.map((p) => {
-        const isInactive = p.lastSeen && now - p.lastSeen > INACTIVITY_THRESHOLD;
-        return isInactive && p.status === "active"
-          ? { ...p, status: "inactive" }
-          : p;
-      });
-
-      const hasChanges = JSON.stringify(current) !== JSON.stringify(inactivePlayers);
-
-      if (hasChanges) {
-        await updateDoc(roomRef, { players: inactivePlayers });
-      }
-    }, 30 * 1000);
+    init();
 
     return () => {
-      unsubSnapshot();
       clearInterval(intervalRef.current);
-      if (unsubscribeOBR) unsubscribeOBR();
+      unsub();
     };
   }, [roomId]);
 

@@ -1,22 +1,22 @@
-import { useEffect, useState } from "react"
-import OBR from "@owlbear-rodeo/sdk"
+import { useEffect, useState } from "react";
+import OBR from "@owlbear-rodeo/sdk";
 
 export default function useRoomId() {
-  const [roomId, setRoomId] = useState(null)
+  const [roomId, setRoomId] = useState(null);
 
   useEffect(() => {
-    const getRoomId = async () => {
+    const fetchRoomId = async () => {
       try {
-        const id = await OBR.room.id
-        setRoomId(id)
+        await OBR.onReady();
+        const id = await OBR.room.id;
+        setRoomId(id);
       } catch (err) {
-        console.error("Erreur lors de la récupération de l'ID de la salle :", err)
+        console.error("❌ useRoomId:", err);
       }
-    }
+    };
 
-    // S'assure que l'extension est bien initialisée
-    OBR.onReady(getRoomId)
-  }, [])
+    fetchRoomId();
+  }, []);
 
-  return roomId
+  return roomId;
 }
