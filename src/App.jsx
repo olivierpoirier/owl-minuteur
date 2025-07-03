@@ -6,7 +6,6 @@ import PlayersSection from "./components/PlayersSection";
 
 export default function TimerPage() {
   let roomId = useRoomId();
-  roomId = "1";
   const { timer, updateTimer } = useTimerLive(roomId);
 
   console.log(roomId);
