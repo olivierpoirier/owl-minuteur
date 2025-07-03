@@ -1,0 +1,4 @@
+npm install @owlbear-rodeo/sdk
+npm install framer-motion
+npm install lucide-react 
+npm install -D tailwindcss@3.4.1 postcss@8.5.3 autoprefixer@10.4.21

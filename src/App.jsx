@@ -1,35 +1,20 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+// pages/TimerPage.jsx
+import useTimerLive from "./hooks/useTimerLive";
+import TimerDisplay from "./components/TimerDisplay";
+import useRoomId from "./hooks/useRoomId";
+import PlayersSection from "./components/PlayersSection";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function TimerPage() {
+  let roomId = useRoomId();
+  roomId = "1";
+  const { timer, updateTimer } = useTimerLive(roomId);
 
+  console.log(roomId);
+  
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] text-[var(--color-text)]">
+      <TimerDisplay timer={timer} onUpdate={updateTimer} />
+      <PlayersSection roomId={roomId}/>
+    </div>
+  );
 }
-
-export default App
