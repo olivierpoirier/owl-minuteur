@@ -8,15 +8,20 @@ import { initializeRoomIfNeeded } from "./utils/initializeRoomIfNeeded";
 
 export default function TimerPage() {
   let roomId = useRoomId();
+  //    roomId = "1"
   const { timer, updateTimer } = useTimerLive(roomId);
 
   useEffect(() => {
     if (roomId) {
+      console.log("📦 Initialisation de la room :", roomId);
       initializeRoomIfNeeded(roomId);
     }
   }, [roomId]);
 
+
   console.log(roomId);
+
+
   
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] text-[var(--color-text)]">

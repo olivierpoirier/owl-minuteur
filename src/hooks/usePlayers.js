@@ -26,7 +26,12 @@ export default function usePlayers(roomId) {
       const data = roomSnap.exists() ? roomSnap.data() : {};
       const savedPlayers = data.players || [];
 
-      const savedMap = Object.fromEntries(savedPlayers.map(p => [p.id, p]));
+      const savedMap = Object.fromEntries(
+        savedPlayers
+          .filter((p) => p && typeof p.id === "string") // filtre les objets valides
+          .map((p) => [p.id, p])
+      );
+
       const now = Date.now();
 
       const updatedPlayers = { ...savedMap };
