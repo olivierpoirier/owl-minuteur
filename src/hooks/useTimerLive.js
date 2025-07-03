@@ -7,6 +7,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import OBR from "@owlbear-rodeo/sdk";
+import { waitUntilReady } from "../utils/obrHelpers";
 
 export default function useTimerLive(roomId) {
   const [timer, setTimer] = useState(null);
@@ -16,7 +17,7 @@ export default function useTimerLive(roomId) {
 
   useEffect(() => {
     const init = async () => {
-      await OBR.onReady();
+      await waitUntilReady();
       const role = await OBR.player.getRole();
       setIsGM(role === "GM");
     };
