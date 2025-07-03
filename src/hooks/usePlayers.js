@@ -7,6 +7,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import OBR from "@owlbear-rodeo/sdk";
+import { waitUntilReady } from "../utils/obrHelpers";
 
 export default function usePlayers(roomId) {
   const [players, setPlayers] = useState([]);
@@ -78,7 +79,7 @@ export default function usePlayers(roomId) {
     };
 
     const init = async () => {
-      await OBR.onReady();
+      await waitUntilReady();
       await OBR.scene.ready;
       syncPlayers();
       OBR.party.onChange(syncPlayers);
