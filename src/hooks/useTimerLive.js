@@ -1,3 +1,4 @@
+// ✅ useTimerLive.js (centralisé et conforme)
 import { useEffect, useState, useRef } from "react";
 import {
   doc,
@@ -42,7 +43,7 @@ export default function useTimerLive(roomId) {
 
       intervalRef.current = setInterval(() => {
         setTimer((prev) => {
-          if (!prev) return null;
+          if (!prev || typeof prev.timeLeft !== "number") return prev;
           const newTime = prev.timeLeft - 1;
 
           if (Date.now() - lastSync.current >= 1000 && newTime > 0) {
@@ -74,7 +75,7 @@ export default function useTimerLive(roomId) {
       if (!t) return;
 
       setTimer(t);
-      t.isRunning ? startLocalTimer(t.timeLeft) : stopLocalTimer();
+      t.isRunning ? startLocalTimer() : stopLocalTimer();
     });
 
     return () => {

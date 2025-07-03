@@ -37,15 +37,13 @@ export default function usePlayers(roomId) {
         const now = Date.now();
         const updatedPlayers = { ...savedMap };
 
-        // par défaut, tous inactifs
         for (const id in updatedPlayers) {
           updatedPlayers[id].status = "inactive";
         }
 
-        // override avec joueurs actifs
         currentPlayers.forEach((p) => {
           updatedPlayers[p.id] = {
-            ...updatedPlayers[p.id],
+            ...updatedPlayers[p.id], // garde couleurs Firestore
             id: p.id,
             name: p.name,
             color: p.color,

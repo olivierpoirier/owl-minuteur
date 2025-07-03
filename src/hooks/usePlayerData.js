@@ -9,29 +9,31 @@ export default function usePlayerData(roomId) {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    const getId = async () => {
+    let unsub = null;
+
+    const init = async () => {
       try {
+        if (!roomId) return;
+
         await waitUntilReady();
         const id = await OBR.player.id;
         setPlayerId(id);
+
+        const ref = doc(db, "rooms", roomId, "players", id);
+        unsub = onSnapshot(ref, (snap) => {
+          setData(snap.exists() ? snap.data() : null);
+        });
       } catch (err) {
         console.error("❌ usePlayerData:", err);
       }
     };
 
-    getId();
-  }, []);
+    init();
 
-  useEffect(() => {
-    if (!roomId || !playerId) return;
-
-    const ref = doc(db, "rooms", roomId, "players", playerId);
-    const unsub = onSnapshot(ref, (snap) => {
-      setData(snap.exists() ? snap.data() : null);
-    });
-
-    return () => unsub();
-  }, [roomId, playerId]);
+    return () => {
+      if (unsub) unsub();
+    };
+  }, [roomId]);
 
   return { playerId, data };
 }
