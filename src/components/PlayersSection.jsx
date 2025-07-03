@@ -2,6 +2,7 @@ import useOwlbearPlayerId from "../hooks/useOwlbearPlayerId";
 import usePlayers from "../hooks/usePlayers";
 import useRoomGroups from "../hooks/useRoomGroups";
 import PlayerCustomizer from "./PlayerCustomizer";
+import PlayersDisplay from "./PlayersDisplay";
 
 export default function PlayersSection({ roomId }) {
   const players = usePlayers(roomId);
