@@ -29,6 +29,8 @@ export default function usePlayers(roomId) {
         const playerId = await OBR.player.id
         const metadata = await OBR.player.getMetadata()
 
+        console.log("METADATA",metadata);
+        
         const playerName = metadata.name ?? "Joueur inconnu"
         const playerColor = metadata.color ?? "#cccccc"
         const playerRole = metadata.role ?? "player"
