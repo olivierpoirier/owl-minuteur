@@ -4,7 +4,11 @@
     "manifest_version": 1,
     "icon": "/vite.svg",
     "author": "Olivier Poirier",
-    "permissions": ["party", "player", "scene"],
+    "permissions": [
+    { "name": "party" },
+    { "name": "player" },
+    { "name": "scene" }
+    ],
     "action": {
       "title": "Owl timer",
       "icon": "/vite.svg",
