@@ -25,14 +25,14 @@ export default function usePlayers(roomId) {
       try {
         console.count("🌀 syncPlayers called");
 
-        await waitUntilReady();
-        await OBR.scene.onReady();
-
+        await waitUntilReady(); // Attend que OBR soit prêt
 
         const sceneMeta = await OBR.scene.getMetadata();
         console.log("🎬 Scene metadata:", sceneMeta);
 
         const currentPlayers = await OBR.party.getPlayers();
+        if (!Array.isArray(currentPlayers)) return;
+
         console.log("👥 OBR Players:", currentPlayers);
 
         const roomSnap = await getDoc(roomRef);
@@ -43,19 +43,17 @@ export default function usePlayers(roomId) {
         }
 
         const savedPlayers = Array.isArray(data.players) ? data.players : [];
-        console.log("🗃️ Players existants dans Firestore:", savedPlayers);
-
         const savedMap = Object.fromEntries(savedPlayers.map(p => [p.id, p]));
         const now = Date.now();
         const updatedPlayers = { ...savedMap };
 
-        // Marquer tous comme inactifs
-        for (const id in updatedPlayers) {
+        // Marquer tous comme inactifs par défaut
+        Object.keys(updatedPlayers).forEach(id => {
           updatedPlayers[id].status = "inactive";
-        }
+        });
 
         // Mettre à jour ou ajouter les joueurs actifs
-        currentPlayers.forEach((p) => {
+        currentPlayers.forEach(p => {
           updatedPlayers[p.id] = {
             ...updatedPlayers[p.id],
             id: p.id,
@@ -68,14 +66,13 @@ export default function usePlayers(roomId) {
         });
 
         const updatedArray = Object.values(updatedPlayers);
-        console.log("🔄 Players à écrire dans Firestore:", updatedArray);
 
-        // Groupes
+        // Groupes : attendre que les joueurs soient ajoutés au waitingGroup si nouveau
         const waitingGroup = new Set(data.waitingGroup || []);
         const playingGroup = new Set(data.playingGroup || []);
         const inactiveGroup = new Set(data.inactiveGroup || []);
 
-        currentPlayers.forEach((p) => {
+        currentPlayers.forEach(p => {
           if (
             !waitingGroup.has(p.id) &&
             !playingGroup.has(p.id) &&
@@ -106,22 +103,24 @@ export default function usePlayers(roomId) {
       }
     };
 
+    const checkInactivity = async () => {
+      const now = Date.now();
+      const current = playersRef.current;
+
+      const newPlayers = current.map((p) =>
+        p.lastSeen && now - p.lastSeen > INACTIVITY_THRESHOLD && p.status === "active"
+          ? { ...p, status: "inactive" }
+          : p
+      );
+
+      if (JSON.stringify(newPlayers) !== JSON.stringify(current)) {
+        console.log("⏳ Inactivité détectée, mise à jour des statuts:", newPlayers);
+        await updateDoc(roomRef, { players: newPlayers });
+      }
+    };
+
     const startInactivityCheck = () => {
-      intervalRef.current = setInterval(async () => {
-        const now = Date.now();
-        const current = playersRef.current;
-
-        const newPlayers = current.map((p) =>
-          p.lastSeen && now - p.lastSeen > INACTIVITY_THRESHOLD && p.status === "active"
-            ? { ...p, status: "inactive" }
-            : p
-        );
-
-        if (JSON.stringify(newPlayers) !== JSON.stringify(current)) {
-          console.log("⏳ Inactivité détectée, mise à jour des statuts:", newPlayers);
-          await updateDoc(roomRef, { players: newPlayers });
-        }
-      }, 30000);
+      intervalRef.current = setInterval(checkInactivity, 30_000); // Toutes les 30 secondes
     };
 
     const unsub = onSnapshot(roomRef, (snap) => {
