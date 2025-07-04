@@ -1,15 +1,15 @@
-// utils/updatePlayerData.js
-import { doc, setDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { doc, getDoc, updateDoc } from "firebase/firestore"
+import { db } from "../firebase"
 
-/**
- * @param {string} roomId - ID de la room
- * @param {string} playerId - ID du joueur (OBR)
- * @param {object} data - Données à enregistrer
- */
-export async function updatePlayerData(roomId, playerId, data) {
-  if (!roomId || !playerId || !data) throw new Error("Arguments manquants");
+export async function updatePlayerData(roomId, playerId, updates) {
+  const ref = doc(db, "rooms", roomId)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) return
 
-  const ref = doc(db, "rooms", roomId, "players", playerId);
-  await setDoc(ref, data, { merge: true }); // merge pour éviter d’écraser tout
+  const data = snap.data()
+  const updatedPlayers = (data.players || []).map((p) =>
+    p.id === playerId ? { ...p, ...updates } : p
+  )
+
+  await updateDoc(ref, { players: updatedPlayers })
 }
