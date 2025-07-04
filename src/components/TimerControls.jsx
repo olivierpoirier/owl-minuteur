@@ -1,7 +1,7 @@
 // components/TimerControls.jsx
 import { Play, Pause, RotateCcw } from "lucide-react";
 
-export default function TimerControls({ timer, onUpdate }) {
+export default function TimerControls({ timer, onUpdate, currentPlayerData }) {
   const handleStart = () => {
     onUpdate({ isRunning: true });
   };
@@ -18,7 +18,9 @@ export default function TimerControls({ timer, onUpdate }) {
     <div className="flex gap-4">
       {timer.isRunning ? (
         <button
-          className="btn-red"
+          style={{
+            color: currentPlayerData.textColorTimer || "[var(--color-text)]",
+          }}
           onClick={handlePause}
           aria-label="Pause timer"
         >
@@ -26,7 +28,9 @@ export default function TimerControls({ timer, onUpdate }) {
         </button>
       ) : (
         <button
-          className="btn-green"
+          style={{
+          color: currentPlayerData.textColorTimer || "[var(--color-text)]",
+          }}
           onClick={handleStart}
           aria-label="Start timer"
         >
@@ -35,7 +39,9 @@ export default function TimerControls({ timer, onUpdate }) {
       )}
 
       <button
-        className="btn-neutral"
+        style={{
+          color: currentPlayerData.textColorTimer || "[var(--color-text)]",
+        }}
         onClick={handleReset}
         aria-label="Reset timer"
       >

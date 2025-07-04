@@ -3,10 +3,11 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import { updatePlayerData } from "../utils/updatePlayerData"
 
-export default function PlayersDisplay({ players, groups, onUpdateGroups, currentUserId }) {
+export default function PlayersDisplay({ players, groups, onUpdateGroups, currentPlayerData, roomId }) {
   const [draggedId, setDraggedId] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [editingName, setEditingName] = useState("")
+  const [editingColor, setEditingColor] = useState("")
 
   const getPlayerById = (id) => players.find((p) => p.id === id)
 
@@ -24,24 +25,26 @@ export default function PlayersDisplay({ players, groups, onUpdateGroups, curren
 
   const handleContextMenu = (e, player) => {
     e.preventDefault()
-    if (player.id === currentUserId) {
+    if (player.id === currentPlayerData.id) {
       setEditingId(player.id)
       setEditingName(player.name || "")
+      setEditingColor(player.color || "")
     }
   }
 
   const handleNameChange = (e) => setEditingName(e.target.value)
 
-  const handleNameSave = async (id) => {
-    await updatePlayerData(groups.roomId, id, { name: editingName })
+  const handleSave = async (id) => {
+    await updatePlayerData(roomId, id, { name: editingName, color:editingColor })
     setEditingId(null)
   }
 
   const renderGroup = (label, groupKey, ids) => (
     <div
-      className="p-4 rounded-xl border-2 shadow w-full md:w-1/3"
+      className="flex flex-col p-4 rounded-xl border-2 shadow w-full"
       style={{
-        backgroundColor: "var(--color-bg)",
+        backgroundColor: currentPlayerData.backgroundColorSections || "var(--color-bg)",
+        color: currentPlayerData.textColor || "[var(--color-text)]",
         borderColor: "var(--color-border)",
         boxShadow: "0 0 12px rgba(0, 255, 255, 0.4)",
       }}
@@ -54,12 +57,12 @@ export default function PlayersDisplay({ players, groups, onUpdateGroups, curren
           const player = getPlayerById(id)
           if (!player) return null
 
-          const isCurrentUser = player.id === currentUserId
+          const isCurrentUser = player.id === currentPlayerData.id
 
           return (
             <motion.div
               key={id}
-              className="flex items-center gap-4 p-2 rounded-lg shadow cursor-move border"
+              className="flex items-center gap-4 p-2 m-4 rounded-lg shadow cursor-move border "
               style={{
                 backgroundColor: isCurrentUser
                   ? player.backgroundColor || "rgba(255,255,255,0.05)"
@@ -83,10 +86,14 @@ export default function PlayersDisplay({ players, groups, onUpdateGroups, curren
                   <form
                     onSubmit={(e) => {
                       e.preventDefault()
-                      handleNameSave(id)
+                      handleSave(id)
                     }}
                     className="flex items-center gap-2"
                   >
+                    <input type="color" 
+                      value={editingColor} 
+                      onChange={(e) => setEditingColor(e.target.value)}   
+                    />
                     <input
                       type="text"
                       className="bg-transparent border-b border-white text-white"
@@ -115,7 +122,7 @@ export default function PlayersDisplay({ players, groups, onUpdateGroups, curren
   )
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 mt-4">
+    <div className="flex flex-col gap-6 mt-4 min-w-full">
       {renderGroup("🎮 En jeu", "playingGroup", groups.playingGroup)}
       {renderGroup("⏳ En attente", "waitingGroup", groups.waitingGroup)}
       {renderGroup("💤 Inactif", "inactiveGroup", groups.inactiveGroup)}

@@ -2,6 +2,8 @@ import { doc, getDoc, updateDoc } from "firebase/firestore"
 import { db } from "../firebase"
 
 export async function updatePlayerData(roomId, playerId, updates) {
+  console.log("🔧 updatePlayerData:", { roomId, playerId, updates }); // ← ici
+
   const ref = doc(db, "rooms", roomId)
   const snap = await getDoc(ref)
   if (!snap.exists()) return
@@ -13,3 +15,4 @@ export async function updatePlayerData(roomId, playerId, updates) {
 
   await updateDoc(ref, { players: updatedPlayers })
 }
+

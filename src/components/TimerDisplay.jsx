@@ -4,7 +4,7 @@ import TimerAdjustButtons from "./TimerAdjustButtons"; // 👈 nouveau
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 
-export default function TimerDisplay({ timer, onUpdate }) {
+export default function TimerDisplay({ timer, onUpdate, currentPlayerData }) {
   if (!timer) return null;
 
   const formatTime = (seconds) => {
@@ -15,16 +15,23 @@ export default function TimerDisplay({ timer, onUpdate }) {
 
   return (
     <motion.div
-      className=" rounded-xl shadow p-6 flex flex-col items-center justify-center gap-4 max-w-xs mx-auto mt-8"
+      className="flex flex-col rounded-xl shadow p-6  items-center justify-center gap-4 mt-8 w-11/12"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
+      style={{
+        backgroundColor: currentPlayerData.backgroundColorTimer || "var(--color-bg)",
+        boxShadow: "0 0 12px rgba(0, 255, 255, 0.4)",
+      }}
     >
-      <div className="text-4xl font-bold text-[var(--color-text)]">
+      <div  className="text-4xl font-bold text-[var(--color-text)]"
+        style={{
+          color: currentPlayerData.textColorTimer || "[var(--color-text)]",
+        }}>
         {formatTime(timer.timeLeft)}
       </div>
 
-      <TimerControls timer={timer} onUpdate={onUpdate} />
-      <TimerAdjustButtons timer={timer} onUpdate={onUpdate} /> 
+      <TimerControls timer={timer} onUpdate={onUpdate} currentPlayerData={currentPlayerData} />
+      <TimerAdjustButtons timer={timer} onUpdate={onUpdate} currentPlayerData={currentPlayerData}/> 
     </motion.div>
   );
 }

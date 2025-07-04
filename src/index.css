@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+
+
+
 :root {
   --color-bg: rgba(0, 0, 0, 0.3); /* effet overlay semi-transparent */
   --color-bg-dark: rgba(20, 20, 20, 0.5);
@@ -12,7 +15,11 @@
   font-family: 'Orbitron', system-ui, Avenir, Helvetica, Arial, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+
+
 }
+
+
 
 body {
   margin: 0;

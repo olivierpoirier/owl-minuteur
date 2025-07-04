@@ -1,30 +1,34 @@
-import useOwlbearPlayerId from "../hooks/useOwlbearPlayerId";
-import usePlayers from "../hooks/usePlayers";
 import useRoomGroups from "../hooks/useRoomGroups";
 import PlayerCustomizer from "./PlayerCustomizer";
 import PlayersDisplay from "./PlayersDisplay";
 
-export default function PlayersSection({ roomId }) {
-  const players = usePlayers(roomId);
+export default function PlayersSection({ players, roomId, currentPlayerData }) {
   const { groups, updateGroups } = useRoomGroups(roomId);
-  const currentUserId = useOwlbearPlayerId();
 
   console.log("🥷 Players :", players);
   console.log("🥷 groups :", groups);
-  console.log("🥷 currentUserId :", currentUserId);
+  console.log("🥷 currentUserId :", currentPlayerData.id);
   
-  if (!currentUserId) return null; // ou un petit loader facultatif
+  if (!currentPlayerData) return null; // ou un petit loader facultatif
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Joueurs</h2>
+    <div className="flex flex-col p-6 w-11/12">
+      <h2 className="text-2xl font-bold mb-4"         
+        style={{
+          color: currentPlayerData.textColor || "[var(--color-text)]",
+        }}>Joueurs</h2>
       <PlayersDisplay
         players={players}
         groups={groups}
         onUpdateGroups={updateGroups}
-        currentUserId={currentUserId} 
+        currentPlayerData={currentPlayerData}
+        roomId={roomId}
       />
-      <PlayerCustomizer roomId={roomId}/>
+      <PlayerCustomizer 
+        players={players}
+        currentPlayerData={currentPlayerData}
+        roomId={roomId}
+      />
     </div>
   );
 }

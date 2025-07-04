@@ -8,7 +8,7 @@ const adjustments = [
   { label: "10m", seconds: 600 },
 ];
 
-export default function TimerAdjustButtons({ timer, onUpdate }) {
+export default function TimerAdjustButtons({ timer, onUpdate, currentPlayerData }) {
   const handleAdjust = useCallback(
     (delta) => {
       if (!timer || typeof timer.timeLeft !== "number" || isNaN(timer.timeLeft)) return;
@@ -24,6 +24,9 @@ export default function TimerAdjustButtons({ timer, onUpdate }) {
         <button
           key={item.label}
           className="btn-outline px-3 py-1 rounded-md text-sm"
+          style={{
+            color: currentPlayerData.textColorTimer || "[var(--color-text)]",
+          }}
           onClick={(e) => {
             e.preventDefault();
             handleAdjust(item.seconds);
