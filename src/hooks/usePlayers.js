@@ -26,6 +26,13 @@ export default function usePlayers(roomId) {
       try {
         await waitUntilReady()
 
+
+        console.log("✅ OBR is ready:", OBR.isReady)
+        console.log("👤 player.id:", OBR.player.id)
+        console.log("👤 player.name:", OBR.player.name)
+        console.log("👤 player.color:", OBR.player.color)
+        console.log("👤 player.role:", OBR.player.role)
+
         const playerId = await OBR.player.id
         const metadata = await OBR.player.getMetadata()
 
