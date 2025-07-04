@@ -23,71 +23,75 @@ export default function usePlayers(roomId) {
     const roomRef = doc(db, "rooms", roomId)
 
     const registerPlayer = async () => {
-      try {
-        await waitUntilReady()
-        const playerId = await OBR.player.id
-        const playerName = await OBR.player.name
-        const playerColor = await OBR.player.color
-        const playerRole = await OBR.player.role
+  try {
+    await waitUntilReady()
 
-        currentPlayerIdRef.current = playerId
+    const playerId = await OBR.player.id
+    const playerName = await OBR.player.name ?? "Joueur inconnu"
+    const playerColor = await OBR.player.color ?? "#cccccc"
+    const playerRole = await OBR.player.role ?? "player"
 
-        const roomSnap = await getDoc(roomRef)
-        const data = roomSnap.exists() ? roomSnap.data() : {}
-        const savedPlayers = Array.isArray(data.players) ? data.players : []
-        const now = Date.now()
+    if (!playerId) throw new Error("playerId est null")
 
-        const updatedPlayersMap = Object.fromEntries(
-          savedPlayers.map((p) => [p.id, p])
-        )
+    currentPlayerIdRef.current = playerId
 
-        // Marquer tous comme inactifs par défaut
-        Object.keys(updatedPlayersMap).forEach((id) => {
-          updatedPlayersMap[id].status = "inactive"
-        })
+    const roomSnap = await getDoc(roomRef)
+    const data = roomSnap.exists() ? roomSnap.data() : {}
+    const savedPlayers = Array.isArray(data.players) ? data.players : []
+    const now = Date.now()
 
-        // Mettre à jour ou ajouter ce joueur seulement
-        updatedPlayersMap[playerId] = {
-          ...updatedPlayersMap[playerId],
-          id: playerId,
-          name: playerName,
-          color: playerColor,
-          role: playerRole,
-          status: "active",
-          lastSeen: now,
-        }
+    const updatedPlayersMap = Object.fromEntries(
+      savedPlayers.map((p) => [p.id, p])
+    )
 
-        const waitingGroup = new Set(data.waitingGroup || [])
-        const playingGroup = new Set(data.playingGroup || [])
-        const inactiveGroup = new Set(data.inactiveGroup || [])
+    // Marquer tous comme inactifs par défaut
+    Object.keys(updatedPlayersMap).forEach((id) => {
+      updatedPlayersMap[id].status = "inactive"
+    })
 
-        if (
-          !waitingGroup.has(playerId) &&
-          !playingGroup.has(playerId) &&
-          !inactiveGroup.has(playerId)
-        ) {
-          console.log(`🆕 Nouveau joueur ajouté au waitingGroup: ${playerName}`)
-          waitingGroup.add(playerId)
-        }
-
-        const newData = {
-          players: Object.values(updatedPlayersMap),
-          waitingGroup: Array.from(waitingGroup),
-          playingGroup: Array.from(playingGroup),
-          inactiveGroup: Array.from(inactiveGroup),
-        }
-
-        console.log("📦 Mise à jour Firestore (auto-register):", newData)
-
-        if (!roomSnap.exists()) {
-          await setDoc(roomRef, newData)
-        } else {
-          await updateDoc(roomRef, newData)
-        }
-      } catch (err) {
-        console.error("❌ registerPlayer error:", err)
-      }
+    // Ajouter ou mettre à jour CE joueur
+    updatedPlayersMap[playerId] = {
+      ...updatedPlayersMap[playerId],
+      id: playerId,
+      name: playerName,
+      color: playerColor,
+      role: playerRole,
+      status: "active",
+      lastSeen: now,
     }
+
+    const waitingGroup = new Set(data.waitingGroup || [])
+    const playingGroup = new Set(data.playingGroup || [])
+    const inactiveGroup = new Set(data.inactiveGroup || [])
+
+    if (
+      !waitingGroup.has(playerId) &&
+      !playingGroup.has(playerId) &&
+      !inactiveGroup.has(playerId)
+    ) {
+      console.log(`🆕 Nouveau joueur ajouté au waitingGroup: ${playerName}`)
+      waitingGroup.add(playerId)
+    }
+
+    const newData = {
+      players: Object.values(updatedPlayersMap).filter(p => !!p.id),
+      waitingGroup: Array.from(waitingGroup),
+      playingGroup: Array.from(playingGroup),
+      inactiveGroup: Array.from(inactiveGroup),
+    }
+
+    console.log("📦 Mise à jour Firestore (auto-register):", newData)
+
+    if (!roomSnap.exists()) {
+      await setDoc(roomRef, newData)
+    } else {
+      await updateDoc(roomRef, newData)
+    }
+  } catch (err) {
+    console.error("❌ registerPlayer error:", err.message, err)
+  }
+}
+
 
     const checkInactivity = async () => {
       const now = Date.now()
