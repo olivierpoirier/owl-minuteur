@@ -9,10 +9,10 @@ import useOwlbearPlayerId from "./hooks/useOwlbearPlayerId";
 import usePlayers from "./hooks/usePlayers";
 
 export default function TimerPage() {
-  let roomId = useRoomId() || "1";
+  let roomId = useRoomId();
   const { timer, updateTimer } = useTimerLive(roomId);
   const players = usePlayers(roomId);
-  const currentUserId = useOwlbearPlayerId() || "8329829839098329832";
+  const currentUserId = useOwlbearPlayerId();
   const currentPlayerData = players.find((p) => p.id === currentUserId)
 
 
