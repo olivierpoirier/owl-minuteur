@@ -16,6 +16,7 @@ export default function usePlayers(roomId) {
   const intervalRef = useRef(null)
   const playersRef = useRef([])
   const currentPlayerIdRef = useRef(null)
+  const lastPlayerDataRef = useRef({}) // 🆕 pour stocker le dernier état local
 
   useEffect(() => {
     if (!roomId) return
@@ -33,14 +34,12 @@ export default function usePlayers(roomId) {
         const playerRole = await OBR.player.getRole() ?? "player"
 
         currentPlayerIdRef.current = playerId
+        lastPlayerDataRef.current = { name: playerName, color: playerColor, role: playerRole } // 🆕
 
-        // Obtenir tous les joueurs connectés à la partie (Owlbear)
         const partyPlayers = await OBR.party.getPlayers()
         const sortedIds = partyPlayers.map((p) => p.id).sort()
-
         console.log("📡 Joueurs connectés dans OBR:", sortedIds)
 
-        // Récupérer les joueurs existants dans Firestore
         const roomSnap = await getDoc(roomRef)
         const data = roomSnap.exists() ? roomSnap.data() : {}
         const savedPlayers = Array.isArray(data.players) ? data.players : []
@@ -52,14 +51,12 @@ export default function usePlayers(roomId) {
 
         const connectedIds = new Set(partyPlayers.map((p) => p.id))
 
-        // ✅ 2. Marquer uniquement comme inactifs ceux qui ne sont plus présents
         Object.keys(updatedPlayersMap).forEach((id) => {
           if (!connectedIds.has(id)) {
             updatedPlayersMap[id].status = "inactive"
           }
         })
 
-        // Ajouter ou mettre à jour ce joueur
         updatedPlayersMap[playerId] = {
           ...updatedPlayersMap[playerId],
           id: playerId,
@@ -131,6 +128,19 @@ export default function usePlayers(roomId) {
       console.log("🚀 Initialisation de usePlayers avec roomId:", roomId)
       await registerPlayer()
       startInactivityCheck()
+
+      // 🔁 Écouter les changements de propriétés du joueur
+      OBR.player.onChange(async (player) => {
+        const last = lastPlayerDataRef.current
+        if (
+          player.name !== last.name ||
+          player.color !== last.color ||
+          player.role !== last.role
+        ) {
+          console.log("🔁 Changement détecté dans les infos du joueur, re-sync")
+          await registerPlayer()
+        }
+      })
     }
 
     init()
