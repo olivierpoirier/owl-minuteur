@@ -17,7 +17,13 @@ export default function useTimerLive(roomId) {
   const intervalRef = useRef(null);
   const lastSync = useRef(Date.now());
 
-  const isLeader = playerId && allPlayerIds.length > 0 && playerId === allPlayerIds[0];
+  const isLeader = playerId && (allPlayerIds.length === 0 || playerId === allPlayerIds[0]);
+
+
+  useEffect(() => {
+    console.log("📡 Players connected:", allPlayerIds);
+    console.log("🎖️ I am leader:", isLeader);
+  }, [allPlayerIds, isLeader]);
 
   // 🔁 Initialiser playerId + rôle
   useEffect(() => {

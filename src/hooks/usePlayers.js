@@ -50,9 +50,13 @@ export default function usePlayers(roomId) {
           savedPlayers.map((p) => [p.id, p])
         )
 
-        // Mettre tout le monde inactif
+        const connectedIds = new Set(partyPlayers.map((p) => p.id))
+
+        // ✅ 2. Marquer uniquement comme inactifs ceux qui ne sont plus présents
         Object.keys(updatedPlayersMap).forEach((id) => {
-          updatedPlayersMap[id].status = "inactive"
+          if (!connectedIds.has(id)) {
+            updatedPlayersMap[id].status = "inactive"
+          }
         })
 
         // Ajouter ou mettre à jour ce joueur
