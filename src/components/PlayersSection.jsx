@@ -1,5 +1,4 @@
 import useRoomGroups from "../hooks/useRoomGroups";
-import PlayerCustomizer from "./PlayerCustomizer";
 import PlayersDisplay from "./PlayersDisplay";
 
 export default function PlayersSection({ players, roomId, currentPlayerData }) {
@@ -13,19 +12,11 @@ export default function PlayersSection({ players, roomId, currentPlayerData }) {
 
   return (
     <div className="flex flex-col p-6 w-11/12">
-      <h2 className="text-2xl font-bold mb-4"         
-        style={{
-          color: currentPlayerData.textColor || "[var(--color-text)]",
-        }}>Joueurs</h2>
+      <h2 className="text-2xl font-bold mb-4">Joueurs</h2>
       <PlayersDisplay
         players={players}
         groups={groups}
         onUpdateGroups={updateGroups}
-        currentPlayerData={currentPlayerData}
-        roomId={roomId}
-      />
-      <PlayerCustomizer 
-        players={players}
         currentPlayerData={currentPlayerData}
         roomId={roomId}
       />

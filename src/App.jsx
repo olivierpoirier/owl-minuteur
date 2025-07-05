@@ -30,7 +30,7 @@ export default function TimerPage() {
   if (!currentPlayerData) return null;  
   
   return (
-    <div className="min-h-screen min-w-screen flex flex-col items-center justify-center bg-[var(--color-bg)] text-[var(--color-text)]">
+    <div className="min-h-screen min-w-screen flex flex-col items-center justify-center text-[var(--color-text)]">
       <TimerDisplay timer={timer} onUpdate={updateTimer} currentPlayerData={currentPlayerData}/>
       <PlayersSection players={players} roomId={roomId} currentPlayerData={currentPlayerData}/>
     </div>

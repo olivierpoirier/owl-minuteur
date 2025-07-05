@@ -31,6 +31,10 @@ export default function usePlayers(roomId) {
         const playerColor = OBR.player.color ?? "#cccccc"
         const playerRole = OBR.player.role ?? "player"
 
+        console.log("PLAYERS",          OBR.party.getPlayers());
+        console.log("PLAYERS", await OBR.party.getPlayers());
+
+
         if (!playerId) throw new Error("playerId est null")
 
         currentPlayerIdRef.current = playerId

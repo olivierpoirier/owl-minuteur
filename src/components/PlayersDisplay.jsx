@@ -41,12 +41,9 @@ export default function PlayersDisplay({ players, groups, onUpdateGroups, curren
 
   const renderGroup = (label, groupKey, ids) => (
     <div
-      className="flex flex-col p-4 rounded-xl border-2 shadow w-full"
+      className="flex flex-col p-4 rounded-xl border-2 w-full shadow-md bg-[var(--color-bg)] border-[var(--color-border)]"
       style={{
-        backgroundColor: currentPlayerData.backgroundColorSections || "var(--color-bg)",
-        color: currentPlayerData.textColor || "[var(--color-text)]",
-        borderColor: "var(--color-border)",
-        boxShadow: "0 0 12px rgba(0, 255, 255, 0.4)",
+        boxShadow: `0 0 12px ${currentPlayerData.color || "rgba(0, 255, 255, 0.4)"}`,
       }}
       onDragOver={(e) => e.preventDefault()}
       onDrop={() => handleDrop(groupKey)}
@@ -62,14 +59,9 @@ export default function PlayersDisplay({ players, groups, onUpdateGroups, curren
           return (
             <motion.div
               key={id}
-              className="flex items-center gap-4 p-2 m-4 rounded-lg shadow cursor-move border "
+              className="flex items-center gap-4 p-2 m-4 rounded-lg shadow cursor-move border-2 border-[var(--color-border)]"
               style={{
-                backgroundColor: isCurrentUser
-                  ? player.backgroundColor || "rgba(255,255,255,0.05)"
-                  : "rgba(255,255,255,0.03)",
-                borderColor: isCurrentUser ? player.color : "transparent",
-                borderWidth: "2px",
-                color: isCurrentUser ? player.textColor || "#fff" : "#aaa",
+                borderColor: player.color || "transparent",
               }}
               draggable
               onDragStart={() => setDraggedId(id)}
