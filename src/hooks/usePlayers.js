@@ -12,6 +12,7 @@ import { waitUntilReady } from "../utils/obrHelpers"
 
 export default function usePlayers(roomId) {
   const [players, setPlayers] = useState([])
+
   const intervalRef = useRef(null)
   const playersRef = useRef([])
   const currentPlayerIdRef = useRef(null)
@@ -26,19 +27,20 @@ export default function usePlayers(roomId) {
       try {
         await waitUntilReady()
 
-        const playerId = await OBR.player.id        
-        const playerName = OBR.player.name ?? "Joueur inconnu"
-        const playerColor = OBR.player.color ?? "#cccccc"
-        const playerRole = OBR.player.role ?? "player"
-
-        console.log("PLAYERS",          OBR.party.getPlayers());
-        console.log("PLAYERS", await OBR.party.getPlayers());
-
-
-        if (!playerId) throw new Error("playerId est null")
+        const playerId = await OBR.player.getId()
+        const playerName = await OBR.player.getName() ?? "Joueur inconnu"
+        const playerColor = await OBR.player.getColor() ?? "#cccccc"
+        const playerRole = await OBR.player.getRole() ?? "player"
 
         currentPlayerIdRef.current = playerId
 
+        // Obtenir tous les joueurs connectés à la partie (Owlbear)
+        const partyPlayers = await OBR.party.getPlayers()
+        const sortedIds = partyPlayers.map((p) => p.id).sort()
+
+        console.log("📡 Joueurs connectés dans OBR:", sortedIds)
+
+        // Récupérer les joueurs existants dans Firestore
         const roomSnap = await getDoc(roomRef)
         const data = roomSnap.exists() ? roomSnap.data() : {}
         const savedPlayers = Array.isArray(data.players) ? data.players : []
@@ -48,12 +50,12 @@ export default function usePlayers(roomId) {
           savedPlayers.map((p) => [p.id, p])
         )
 
-        // Marquer tous comme inactifs par défaut
+        // Mettre tout le monde inactif
         Object.keys(updatedPlayersMap).forEach((id) => {
           updatedPlayersMap[id].status = "inactive"
         })
 
-        // Ajouter ou mettre à jour CE joueur
+        // Ajouter ou mettre à jour ce joueur
         updatedPlayersMap[playerId] = {
           ...updatedPlayersMap[playerId],
           id: playerId,
@@ -84,8 +86,6 @@ export default function usePlayers(roomId) {
           inactiveGroup: Array.from(inactiveGroup),
         }
 
-        console.log("📦 Mise à jour Firestore (auto-register):", newData)
-
         if (!roomSnap.exists()) {
           await setDoc(roomRef, newData)
         } else {
@@ -95,8 +95,6 @@ export default function usePlayers(roomId) {
         console.error("❌ registerPlayer error:", err.message, err)
       }
     }
-
-
 
     const checkInactivity = async () => {
       const now = Date.now()

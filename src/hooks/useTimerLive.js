@@ -1,4 +1,4 @@
-// ✅ useTimerLive.js (centralisé et conforme)
+// ✅ useTimerLive.js
 import { useEffect, useState, useRef } from "react";
 import {
   doc,
@@ -12,15 +12,28 @@ import { waitUntilReady } from "../utils/obrHelpers";
 
 export default function useTimerLive(roomId) {
   const [timer, setTimer] = useState(null);
-  const [isGM, setIsGM] = useState(false);
+  const [playerId, setPlayerId] = useState(null);
+  const [allPlayerIds, setAllPlayerIds] = useState([]);
   const intervalRef = useRef(null);
   const lastSync = useRef(Date.now());
 
+  const isLeader = playerId && allPlayerIds.length > 0 && playerId === allPlayerIds[0];
+
+  // 🔁 Initialiser playerId + rôle
   useEffect(() => {
     const init = async () => {
       await waitUntilReady();
-      const role = await OBR.player.getRole();
-      setIsGM(role === "GM");
+      const id = await OBR.player.getId();
+      setPlayerId(id);
+
+      // 🔄 Écouter les autres joueurs pour élire un leader
+      OBR.party.onChange((players) => {
+        const ids = players.map((p) => p.id).sort(); // Triés pour désigner un leader
+        setAllPlayerIds(ids);
+      });
+
+      const players = await OBR.party.getPlayers();
+      setAllPlayerIds(players.map((p) => p.id).sort());
     };
 
     init();
@@ -75,14 +88,20 @@ export default function useTimerLive(roomId) {
       if (!t) return;
 
       setTimer(t);
-      t.isRunning ? startLocalTimer() : stopLocalTimer();
+
+      // ✅ Seul le leader fait tourner le timer
+      if (t.isRunning && isLeader) {
+        startLocalTimer();
+      } else {
+        stopLocalTimer();
+      }
     });
 
     return () => {
       unsub();
       stopLocalTimer();
     };
-  }, [roomId]);
+  }, [roomId, isLeader]);
 
   const updateTimer = async (fields) => {
     if (!roomId || !timer) return;
@@ -106,5 +125,10 @@ export default function useTimerLive(roomId) {
     });
   };
 
-  return { timer, updateTimer, isGM };
+  return {
+    timer,
+    updateTimer,
+    isLeader,
+    playerId,
+  };
 }
