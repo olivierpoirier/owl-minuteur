@@ -26,11 +26,13 @@ export default function TimerPage() {
 
   console.log(roomId);
   console.log("CurrentUserData", currentPlayerData);
-  
-  if (!currentPlayerData) return null;  
+      console.log("🥷 Players :", players);
+  console.log("🥷 currentUserId :", currentUserId);
+
+
   
   return (
-    <div className="min-h-screen min-w-screen flex flex-col items-center justify-center text-[var(--color-text)]">
+    <div className="min-h-screen min-w-screen flex flex-col items-center justify-center text-[var(--color-text)] m-4">
       <TimerDisplay timer={timer} onUpdate={updateTimer} currentPlayerData={currentPlayerData}/>
       <PlayersSection players={players} roomId={roomId} currentPlayerData={currentPlayerData}/>
     </div>

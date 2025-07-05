@@ -15,22 +15,19 @@ export default function TimerDisplay({ timer, onUpdate, currentPlayerData }) {
 
   return (
     <motion.div
-      className="flex flex-col rounded-xl shadow p-6  items-center justify-center gap-4 mt-8 w-11/12 bg-[var(--color-bg)]"
+      className="flex flex-col rounded-xl shadow p-6  items-center justify-center gap-4 mt-8 w-full bg-[var(--color-bg)]"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       style={{
-        boxShadow: `0 0 12px ${currentPlayerData.color || "rgba(0, 255, 255, 0.4)"}`,
+        boxShadow: `0 0 12px ${currentPlayerData?.color || "rgba(0, 255, 255, 0.4)"}`,
       }}
     >
-      <div  className="text-4xl font-bold text-[var(--color-text)]"
-        style={{
-          color: currentPlayerData.textColorTimer || "[var(--color-text)]",
-        }}>
-        {formatTime(timer.timeLeft)}
+      <div  className="text-4xl font-bold text-[var(--color-text)]">
+        {formatTime(timer?.timeLeft)}
       </div>
 
       <TimerControls timer={timer} onUpdate={onUpdate} currentPlayerData={currentPlayerData} />
-      <TimerAdjustButtons timer={timer} onUpdate={onUpdate} currentPlayerData={currentPlayerData}/> 
+      <TimerAdjustButtons timer={timer} onUpdate={onUpdate}/> 
     </motion.div>
   );
 }

@@ -8,11 +8,11 @@ const adjustments = [
   { label: "10m", seconds: 600 },
 ];
 
-export default function TimerAdjustButtons({ timer, onUpdate, currentPlayerData }) {
+export default function TimerAdjustButtons({ timer, onUpdate }) {
   const handleAdjust = useCallback(
     (delta) => {
-      if (!timer || typeof timer.timeLeft !== "number" || isNaN(timer.timeLeft)) return;
-      const newTime = Math.max(0, timer.timeLeft + delta);
+      if (!timer || typeof timer?.timeLeft !== "number" || isNaN(timer?.timeLeft)) return;
+      const newTime = Math.max(0, timer?.timeLeft + delta);
       onUpdate({ timeLeft: newTime });
     },
     [timer, onUpdate]
@@ -24,19 +24,16 @@ export default function TimerAdjustButtons({ timer, onUpdate, currentPlayerData 
         <button
           key={item.label}
           className="btn-outline px-3 py-1 rounded-md text-sm"
-          style={{
-            color: currentPlayerData.textColorTimer || "[var(--color-text)]",
-          }}
           onClick={(e) => {
             e.preventDefault();
-            handleAdjust(item.seconds);
+            handleAdjust(item?.seconds);
           }}
           onContextMenu={(e) => {
             e.preventDefault();
-            handleAdjust(-item.seconds);
+            handleAdjust(-item?.seconds);
           }}
         >
-          {item.label}
+          {item?.label}
         </button>
       ))}
     </div>

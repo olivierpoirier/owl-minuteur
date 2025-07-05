@@ -18,9 +18,6 @@ export default function TimerControls({ timer, onUpdate, currentPlayerData }) {
     <div className="flex gap-4">
       {timer.isRunning ? (
         <button
-          style={{
-            color: currentPlayerData.textColorTimer || "[var(--color-text)]",
-          }}
           onClick={handlePause}
           aria-label="Pause timer"
         >
@@ -29,7 +26,7 @@ export default function TimerControls({ timer, onUpdate, currentPlayerData }) {
       ) : (
         <button
           style={{
-          color: currentPlayerData.textColorTimer || "[var(--color-text)]",
+          color: currentPlayerData?.textColorTimer || "[var(--color-text)]",
           }}
           onClick={handleStart}
           aria-label="Start timer"
@@ -40,7 +37,7 @@ export default function TimerControls({ timer, onUpdate, currentPlayerData }) {
 
       <button
         style={{
-          color: currentPlayerData.textColorTimer || "[var(--color-text)]",
+          color: currentPlayerData?.textColorTimer || "[var(--color-text)]",
         }}
         onClick={handleReset}
         aria-label="Reset timer"
