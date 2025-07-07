@@ -4,11 +4,13 @@ import { db } from "../firebase";
 import OBR from "@owlbear-rodeo/sdk";
 import { waitUntilReady } from "../utils/obrHelpers";
 
-export default function useTimerLive(roomId) {
+export default function useTimerLive(roomId, currentUserData) {
   const [timer, setTimer] = useState(null);
   const [playerId, setPlayerId] = useState(null);
   const [allPlayerIds, setAllPlayerIds] = useState([]);
   const intervalRef = useRef(null);
+  const hasPlayedRef = useRef(false); // ✅ empêche de rejouer le son plusieurs fois
+  const timeLeft = timer?.timeLeft;
 
   const isLeader = useMemo(() => {
     return playerId && allPlayerIds.length > 0 && playerId === allPlayerIds[0];
@@ -70,7 +72,6 @@ export default function useTimerLive(roomId) {
             ...(newTime === 0 && { "timer.isRunning": false }),
           });
 
-          // Pas besoin de mise à jour locale ici pour les autres
           return {
             ...prev,
             timeLeft: newTime,
@@ -90,7 +91,34 @@ export default function useTimerLive(roomId) {
     };
   }, [isLeader, timer?.isRunning, roomId]);
 
-  // 🔄 Fonction de mise à jour (ex: boutons d'ajustement)
+
+  // 🔊 Lecture du son quand timeLeft atteint 0
+  useEffect(() => {
+    if (timeLeft !== 0 || hasPlayedRef.current) return;
+
+    hasPlayedRef.current = true;
+    const soundKey = currentUserData?.timerSound || "son1";
+    const soundUrl = {
+      son1: "/sounds/son1.mp3",
+      son2: "/sounds/son2.mp3",
+      son3: "/sounds/son3.mp3",
+    }[soundKey];
+
+    if (soundUrl) {
+      const audio = new Audio(soundUrl);
+      audio.play().catch((e) => console.warn("🔇 Erreur lecture son:", e));
+    }
+  }, [timeLeft, currentUserData?.timerSound]);
+
+
+  // 🛠 Reset la permission de rejouer le son quand on redémarre
+  useEffect(() => {
+    if (timer?.timeLeft > 0) {
+      hasPlayedRef.current = false;
+    }
+  }, [timer?.timeLeft]);
+
+  // 🔄 Fonction de mise à jour
   const updateTimer = async (fields) => {
     if (!roomId || !timer) return;
 

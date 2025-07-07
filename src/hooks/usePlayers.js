@@ -65,6 +65,10 @@ export default function usePlayers(roomId) {
           role: playerRole,
           status: "active",
           lastSeen: now,
+
+          // 🎵 Ajouts personnalisés
+          timerSound: updatedPlayersMap[playerId]?.timerSound || "son1",
+          timerColor: updatedPlayersMap[playerId]?.timerColor ?? null,
         }
 
         const waitingGroup = new Set(data.waitingGroup || [])

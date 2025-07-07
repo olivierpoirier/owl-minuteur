@@ -9,7 +9,7 @@ import useOwlbearPlayerId from "./hooks/useOwlbearPlayerId";
 import usePlayers from "./hooks/usePlayers";
 
 export default function TimerPage() {
-  let roomId = useRoomId();
+  const roomId = useRoomId();
 
   const players = usePlayers(roomId);
   const currentUserId = useOwlbearPlayerId();
@@ -35,7 +35,7 @@ export default function TimerPage() {
   
   return (
     <div className="min-h-screen min-w-screen flex flex-col items-center justify-center text-[var(--color-text)] m-4">
-      <TimerDisplay timer={timer} onUpdate={updateTimer} currentPlayerData={currentPlayerData}/>
+      <TimerDisplay timer={timer} onUpdate={updateTimer} currentPlayerData={currentPlayerData} roomId={roomId}/>
       <PlayersSection players={players} roomId={roomId} currentPlayerData={currentPlayerData}/>
     </div>
   );
