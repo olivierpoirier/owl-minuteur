@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { initializeRoomIfNeeded } from "./utils/initializeRoomIfNeeded";
 import useOwlbearPlayerId from "./hooks/useOwlbearPlayerId";
 import usePlayers from "./hooks/usePlayers";
+import OBR from "@owlbear-rodeo/sdk";
 
 export default function TimerPage() {
   let roomId = useRoomId();
@@ -24,6 +25,19 @@ export default function TimerPage() {
     }
   }, [roomId]);
 
+
+  useEffect(() => {
+    try {
+      OBR.onReady(() => {
+        const partyPlayers = OBR.party.getPlayers()
+        console.log("☕ PLAYERS", partyPlayers);
+        
+      });
+    } catch (error) {
+      console.error("Erreur OBR Ready :", error);
+    }
+  }, []);
+  
   /*
   console.log(roomId);
   console.log("CurrentUserData", currentPlayerData);

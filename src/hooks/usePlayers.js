@@ -28,6 +28,11 @@ export default function usePlayers(roomId) {
       try {
         await waitUntilReady()
 
+        await OBR.onReady(
+
+          
+        )
+
         const playerId = await OBR.player.getId()
         const playerName = await OBR.player.getName() ?? "Joueur inconnu"
         const playerColor = await OBR.player.getColor() ?? "#cccccc"
