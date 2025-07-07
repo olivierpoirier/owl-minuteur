@@ -19,7 +19,6 @@ export default function useTimerLive(roomId) {
   useEffect(() => {
     const init = async () => {
       await waitUntilReady();
-
       const id = await OBR.player.getId();
       setPlayerId(id);
 
@@ -37,7 +36,7 @@ export default function useTimerLive(roomId) {
     init();
   }, []);
 
-  // 📡 Listen Firestore timer
+  // 📡 Firestore listener
   useEffect(() => {
     if (!roomId) return;
     const ref = doc(db, "rooms", roomId);
@@ -45,20 +44,18 @@ export default function useTimerLive(roomId) {
     const unsub = onSnapshot(ref, (snap) => {
       const data = snap.exists() ? snap.data() : {};
       const t = data.timer;
-      if (!t) return;
-
-      setTimer(t);
+      if (t) {
+        setTimer(t);
+        setDisplayTimeLeft(t.timeLeft);
+      }
     });
 
     return () => unsub();
   }, [roomId]);
 
-  // 🎯 Calcule du temps restant
+  // 🎯 Leader: décrémente et sauvegarde dans Firestore
   useEffect(() => {
-    if (!timer?.isRunning) {
-      setDisplayTimeLeft(timer?.timeLeft ?? null);
-      return;
-    }
+    if (!isLeader || !timer?.isRunning) return;
 
     const getElapsed = () => {
       const now = Date.now();
@@ -71,36 +68,33 @@ export default function useTimerLive(roomId) {
       const elapsed = getElapsed();
       const newTime = Math.max(0, timer.timeLeft - elapsed);
 
-      if (isLeader) {
-        const ref = doc(db, "rooms", roomId);
+      const ref = doc(db, "rooms", roomId);
 
-        if (newTime <= 0) {
-          updateDoc(ref, {
-            "timer.timeLeft": 0,
-            "timer.isRunning": false,
-            "timer.lastUpdated": serverTimestamp(),
-          });
-        } else {
-          updateDoc(ref, {
-            "timer.timeLeft": newTime,
-            "timer.lastUpdated": serverTimestamp(),
-          });
-        }
+      if (newTime <= 0) {
+        updateDoc(ref, {
+          "timer.timeLeft": 0,
+          "timer.isRunning": false,
+          "timer.lastUpdated": serverTimestamp(),
+        });
+      } else {
+        updateDoc(ref, {
+          "timer.timeLeft": newTime,
+          "timer.lastUpdated": serverTimestamp(),
+        });
       }
 
       setDisplayTimeLeft(newTime);
     };
 
-    tick(); // immédiat
+    tick(); // lancement immédiat
     intervalRef.current = setInterval(tick, 1000);
 
     return () => clearInterval(intervalRef.current);
-  }, [timer?.isRunning, isLeader, timer?.timeLeft, timer?.lastUpdated, roomId]);
+  }, [isLeader, timer?.isRunning, timer?.timeLeft, timer?.lastUpdated, roomId]);
 
-  // 🛠️ Fonction de mise à jour manuelle
+  // 🛠️ Fonction manuelle (ex: ajout de temps)
   const updateTimer = async (fields) => {
-    if (!roomId || !timer) return;
-
+    if (!roomId) return;
     const ref = doc(db, "rooms", roomId);
     const dotFields = Object.fromEntries(
       Object.entries(fields).map(([k, v]) => [`timer.${k}`, v])
