@@ -16,17 +16,12 @@ export default function useTimerLive(roomId) {
   const intervalRef = useRef(null);
   const lastSync = useRef(Date.now());
 
-  // 🧠 Leader = le joueur avec l'ID le plus bas (trié)
+  // 🧠 Le leader est le joueur avec l'ID trié le plus bas
   const isLeader = useMemo(() => {
     return playerId && allPlayerIds.length > 0 && playerId === allPlayerIds[0];
   }, [playerId, allPlayerIds]);
 
-  useEffect(() => {
-    console.log("📡 Players connected (incluant moi):", allPlayerIds);
-    console.log("🎖️ I am leader:", isLeader);
-  }, [allPlayerIds, isLeader]);
-
-  // 🔁 Initialiser playerId + liste complète des joueurs (avec moi)
+  // 🔁 Initialisation des joueurs
   useEffect(() => {
     const init = async () => {
       await waitUntilReady();
@@ -37,10 +32,8 @@ export default function useTimerLive(roomId) {
       const self = { id };
       const others = await OBR.party.getPlayers();
       const combined = [...others, self];
-
       setAllPlayerIds(combined.map((p) => p.id).sort());
 
-      // 🔄 Met à jour la liste des joueurs à chaque changement
       OBR.party.onChange(async (updatedPlayers) => {
         const everyone = [...updatedPlayers, { id }];
         setAllPlayerIds(everyone.map((p) => p.id).sort());
@@ -50,48 +43,11 @@ export default function useTimerLive(roomId) {
     init();
   }, []);
 
+  // 📡 Écoute des changements Firestore
   useEffect(() => {
     if (!roomId) return;
 
     const ref = doc(db, "rooms", roomId);
-
-    const stopLocalTimer = () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-
-    const startLocalTimer = () => {
-      if (intervalRef.current) return;
-
-      intervalRef.current = setInterval(() => {
-        setTimer((prev) => {
-          if (!prev || typeof prev.timeLeft !== "number") return prev;
-          const newTime = prev.timeLeft - 1;
-
-          if (Date.now() - lastSync.current >= 1000 && newTime > 0) {
-            updateDoc(ref, {
-              "timer.timeLeft": newTime,
-              "timer.lastUpdated": serverTimestamp(),
-            });
-            lastSync.current = Date.now();
-          }
-
-          if (newTime <= 0) {
-            stopLocalTimer();
-            updateDoc(ref, {
-              "timer.timeLeft": 0,
-              "timer.isRunning": false,
-              "timer.lastUpdated": serverTimestamp(),
-            });
-            return { ...prev, timeLeft: 0, isRunning: false };
-          }
-
-          return { ...prev, timeLeft: newTime };
-        });
-      }, 1000);
-    };
 
     const unsub = onSnapshot(ref, (snap) => {
       const data = snap.exists() ? snap.data() : {};
@@ -99,21 +55,75 @@ export default function useTimerLive(roomId) {
       if (!t) return;
 
       setTimer(t);
-
-      // ✅ Seul le leader fait tourner le timer
-      if (t.isRunning && isLeader) {
-        startLocalTimer();
-      } else {
-        stopLocalTimer();
-      }
+      lastSync.current = Date.now();
     });
 
-    return () => {
-      unsub();
-      stopLocalTimer();
-    };
-  }, [roomId, isLeader]);
+    return () => unsub();
+  }, [roomId]);
 
+  // ⏱️ Démarre un timer local pour tous les joueurs
+  useEffect(() => {
+    if (!timer || !timer.isRunning) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+      return;
+    }
+
+    const ref = doc(db, "rooms", roomId);
+
+    const getTimeLeftFromServer = () => {
+      const now = Date.now();
+      const lastUpdated = timer.lastUpdated?.toMillis?.();
+
+      if (!lastUpdated) {
+        // 🔰 Fallback si le champ n'existe pas encore dans Firestore
+        return timer.timeLeft;
+      }
+
+      const elapsed = Math.floor((now - lastUpdated) / 1000);
+      return Math.max(0, timer.timeLeft - elapsed);
+    };
+
+    const updateLoop = () => {
+      setTimer((prev) => {
+        if (!prev || typeof prev.timeLeft !== "number") return prev;
+
+        const newTime = getTimeLeftFromServer();
+
+        if (isLeader) {
+          if (newTime <= 0) {
+            updateDoc(ref, {
+              "timer.timeLeft": 0,
+              "timer.isRunning": false,
+              "timer.lastUpdated": serverTimestamp(),
+            });
+            clearInterval(intervalRef.current);
+            return { ...prev, timeLeft: 0, isRunning: false };
+          }
+
+          if (Date.now() - lastSync.current >= 1000) {
+            updateDoc(ref, {
+              "timer.timeLeft": newTime,
+              "timer.lastUpdated": serverTimestamp(),
+            });
+            lastSync.current = Date.now();
+          }
+        }
+
+        return { ...prev, timeLeft: newTime };
+      });
+    };
+
+    updateLoop(); // Appel immédiat
+    intervalRef.current = setInterval(updateLoop, 1000);
+
+    return () => {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    };
+  }, [timer.isRunning, isLeader, timer.lastUpdated, timer, roomId]);
+
+  // 🔄 Mise à jour manuelle du timer
   const updateTimer = async (fields) => {
     if (!roomId || !timer) return;
 
