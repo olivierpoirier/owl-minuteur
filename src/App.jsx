@@ -23,12 +23,12 @@ export default function TimerPage() {
     }
   }, [roomId]);
 
-
+  /*
   console.log(roomId);
   console.log("CurrentUserData", currentPlayerData);
-      console.log("🥷 Players :", players);
+  console.log("🥷 Players :", players);
   console.log("🥷 currentUserId :", currentUserId);
-
+  */
 
   
   return (

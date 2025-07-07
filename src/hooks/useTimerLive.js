@@ -17,6 +17,10 @@ export default function useTimerLive(roomId) {
   const intervalRef = useRef(null);
   const lastSync = useRef(Date.now());
 
+  console.log("PlayerId",playerId);
+  console.log("PLAYERS", allPlayerIds);
+  
+  
   const isLeader = playerId && (allPlayerIds.length === 0 || playerId === allPlayerIds[0]);
 
 
