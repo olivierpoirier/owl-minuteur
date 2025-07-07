@@ -8,12 +8,6 @@ export default function useRoomId() {
   useEffect(() => {
     const fetchRoomId = async () => {
       try {
-        // Vérifie si OBR est disponible dans l'environnement
-        if (typeof window.OBR === "undefined") {
-          console.warn("⚠️ OBR non disponible, fallback sur roomId = '1'");
-          setRoomId("1");
-          return;
-        }
 
         // Sinon, attend que l'extension soit prête
         await waitUntilReady();

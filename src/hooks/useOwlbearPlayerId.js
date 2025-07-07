@@ -10,13 +10,6 @@ export default function useOwlbearPlayerId() {
 
     const getId = async () => {
       try {
-        // Vérifie si OBR est disponible dans l'environnement
-        if (typeof window.OBR === "undefined") {
-          console.warn("⚠️ OBR non disponible, fallback sur playerId = '1'");
-          setPlayerId("1");
-          return;
-        }
-
         await waitUntilReady();
         const id = await OBR.player.id;
         if (isMounted) setPlayerId(id);
