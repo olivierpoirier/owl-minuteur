@@ -64,7 +64,7 @@ export default function TimerDisplay({ timer, onUpdate, currentPlayerData, roomI
             <div className="mb-3">
               <label className="block text-sm font-medium mb-1">🔊 Son d'alarme</label>
               <select
-                className="w-full border px-2 py-1 rounded"
+                className="w-full border px-2 py-1 rounded bg-gray-600"
                 value={selectedSound}
                 onChange={(e) => setSelectedSound(e.target.value)}
               >
