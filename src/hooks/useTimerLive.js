@@ -1,5 +1,5 @@
 // ✅ useTimerLive.js
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import {
   doc,
   onSnapshot,
@@ -16,14 +16,16 @@ export default function useTimerLive(roomId) {
   const [allPlayerIds, setAllPlayerIds] = useState([]);
   const intervalRef = useRef(null);
   const lastSync = useRef(Date.now());
+  const isLeader = useMemo(() => {
+    return playerId && allPlayerIds.length > 0 && playerId === allPlayerIds[0];
+  }, [playerId, allPlayerIds]);
 
   console.log("PlayerId",playerId);
   console.log("PLAYERS", allPlayerIds);
-  
-  
-  const isLeader = playerId && (allPlayerIds.length === 0 || playerId === allPlayerIds[0]);
 
 
+  
+  
   useEffect(() => {
     console.log("📡 Players connected:", allPlayerIds);
     console.log("🎖️ I am leader:", isLeader);
@@ -43,6 +45,7 @@ export default function useTimerLive(roomId) {
       });
 
       const players = await OBR.party.getPlayers();
+        console.log("OWLBÉEAR PLAYERS", players);
       setAllPlayerIds(players.map((p) => p.id).sort());
     };
 
