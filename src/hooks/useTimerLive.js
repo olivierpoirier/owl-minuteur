@@ -25,6 +25,7 @@ export default function useTimerLive(roomId) {
   useEffect(() => {
     const init = async () => {
       await waitUntilReady();
+
       const id = await OBR.player.getId();
       setPlayerId(id);
 
@@ -54,15 +55,15 @@ export default function useTimerLive(roomId) {
       if (!t) return;
 
       setTimer(t);
-      lastSync.current = Date.now(); // pour forcer le recalcul local
+      lastSync.current = Date.now();
     });
 
     return () => unsub();
   }, [roomId]);
 
-  // ⏱️ Timer local synchronisé
+  // ⏱️ Démarre un timer local pour tous les joueurs
   useEffect(() => {
-    if (!timer || !timer.isRunning) {
+    if (!timer || !timer?.isRunning) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
       return;
@@ -72,49 +73,55 @@ export default function useTimerLive(roomId) {
 
     const getTimeLeftFromServer = () => {
       const now = Date.now();
-      const lastUpdated = timer.lastUpdated?.toMillis?.();
+      const lastUpdated = timer?.lastUpdated?.toMillis?.();
 
-      if (!lastUpdated) return timer.timeLeft;
+      if (!lastUpdated) {
+        // 🔰 Fallback si le champ n'existe pas encore dans Firestore
+        return timer?.timeLeft;
+      }
 
       const elapsed = Math.floor((now - lastUpdated) / 1000);
-      return Math.max(0, timer.timeLeft - elapsed);
+      return Math.max(0, timer?.timeLeft - elapsed);
     };
 
     const updateLoop = () => {
-      const newTime = getTimeLeftFromServer();
-
       setTimer((prev) => {
-        if (!prev) return prev;
+        if (!prev || typeof prev?.timeLeft !== "number") return prev;
+
+        const newTime = getTimeLeftFromServer();
+
+        if (isLeader) {
+          if (newTime <= 0) {
+            updateDoc(ref, {
+              "timer.timeLeft": 0,
+              "timer.isRunning": false,
+              "timer.lastUpdated": serverTimestamp(),
+            });
+            clearInterval(intervalRef.current);
+            return { ...prev, timeLeft: 0, isRunning: false };
+          }
+
+          if (Date.now() - lastSync?.current >= 1000) {
+            updateDoc(ref, {
+              "timer.timeLeft": newTime,
+              "timer.lastUpdated": serverTimestamp(),
+            });
+            lastSync.current = Date.now();
+          }
+        }
 
         return { ...prev, timeLeft: newTime };
       });
-
-      if (isLeader) {
-        if (newTime <= 0) {
-          updateDoc(ref, {
-            "timer.timeLeft": 0,
-            "timer.isRunning": false,
-            "timer.lastUpdated": serverTimestamp(),
-          });
-          clearInterval(intervalRef.current);
-        } else if (Date.now() - lastSync.current >= 1000) {
-          updateDoc(ref, {
-            "timer.timeLeft": newTime,
-            "timer.lastUpdated": serverTimestamp(),
-          });
-          lastSync.current = Date.now();
-        }
-      }
     };
 
-    updateLoop(); // première exécution immédiate
+    updateLoop(); // Appel immédiat
     intervalRef.current = setInterval(updateLoop, 1000);
 
     return () => {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     };
-  }, [timer, isLeader, roomId]);
+  }, [timer?.isRunning, isLeader, timer?.lastUpdated, timer, roomId]);
 
   // 🔄 Mise à jour manuelle du timer
   const updateTimer = async (fields) => {
@@ -125,8 +132,7 @@ export default function useTimerLive(roomId) {
       isRunning: fields.isRunning ?? timer.isRunning,
     };
 
-    const noChange =
-      next.timeLeft === timer.timeLeft && next.isRunning === timer.isRunning;
+    const noChange = next.timeLeft === timer.timeLeft && next.isRunning === timer.isRunning;
     if (noChange) return;
 
     const ref = doc(db, "rooms", roomId);
