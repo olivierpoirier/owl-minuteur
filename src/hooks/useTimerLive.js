@@ -18,7 +18,6 @@ export default function useTimerLive(roomId) {
   useEffect(() => {
     const init = async () => {
       await waitUntilReady();
-
       const id = await OBR.player.getId();
       setPlayerId(id);
 
@@ -36,7 +35,7 @@ export default function useTimerLive(roomId) {
     init();
   }, []);
 
-  // 📡 Listen Firestore timer
+  // 📡 Écoute Firestore
   useEffect(() => {
     if (!roomId) return;
     const ref = doc(db, "rooms", roomId);
@@ -45,16 +44,15 @@ export default function useTimerLive(roomId) {
       const data = snap.exists() ? snap.data() : {};
       const t = data.timer;
       if (!t) return;
-
-      setTimer(t);
+      setTimer(t); // Affichage uniquement, pas de décrémentation
     });
 
     return () => unsub();
   }, [roomId]);
 
-  // ⏱️ Timer loop
+  // ⏱️ Timer loop – leader uniquement
   useEffect(() => {
-    if (!timer?.isRunning) return;
+    if (!isLeader || !timer?.isRunning) return;
 
     const ref = doc(db, "rooms", roomId);
 
@@ -62,18 +60,17 @@ export default function useTimerLive(roomId) {
       intervalRef.current = setInterval(() => {
         setTimer((prev) => {
           if (!prev) return prev;
+
           const newTime = Math.max(0, prev.timeLeft - 1);
 
-          // Si leader, sync vers Firestore
-          if (isLeader) {
-            updateDoc(ref, {
-              "timer.timeLeft": newTime,
-              "timer.lastUpdated": serverTimestamp(),
-              ...(newTime === 0 && { "timer.isRunning": false }),
-            });
-          }
+          // Sync Firestore
+          updateDoc(ref, {
+            "timer.timeLeft": newTime,
+            "timer.lastUpdated": serverTimestamp(),
+            ...(newTime === 0 && { "timer.isRunning": false }),
+          });
 
-          // Mise à jour locale
+          // Pas besoin de mise à jour locale ici pour les autres
           return {
             ...prev,
             timeLeft: newTime,
@@ -91,9 +88,9 @@ export default function useTimerLive(roomId) {
         intervalRef.current = null;
       }
     };
-  }, [timer?.isRunning, isLeader, roomId]);
+  }, [isLeader, timer?.isRunning, roomId]);
 
-  // 🔄 Fonction manuelle
+  // 🔄 Fonction de mise à jour (ex: boutons d'ajustement)
   const updateTimer = async (fields) => {
     if (!roomId || !timer) return;
 
@@ -102,7 +99,10 @@ export default function useTimerLive(roomId) {
       isRunning: fields.isRunning ?? timer.isRunning,
     };
 
-    const noChange = next.timeLeft === timer.timeLeft && next.isRunning === timer.isRunning;
+    const noChange =
+      next.timeLeft === timer.timeLeft &&
+      next.isRunning === timer.isRunning;
+
     if (noChange) return;
 
     const ref = doc(db, "rooms", roomId);
