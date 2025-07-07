@@ -65,7 +65,7 @@ export default function TimerDisplay({ timer, onUpdate, currentPlayerData, roomI
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute top-10 right-2 border border-[var(--color-border)] rounded-lg p-4 z-50 shadow-lg w-[220px]"
+            className="absolute top-10 right-2 border border-[var(--color-border)] rounded-lg p-4 z-50 shadow-lg w-[220px] bg-gray-400"
           >
             <div className="mb-3">
               <label className="block text-sm font-medium mb-1">🔊 Son d'alarme</label>
