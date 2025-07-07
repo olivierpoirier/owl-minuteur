@@ -95,7 +95,7 @@ export default function TimerDisplay({ timer, onUpdate, currentPlayerData, roomI
 
             <button
               onClick={handleSave}
-              className="w-full bg-blue-600 text-white py-1 px-2 rounded hover:bg-blue-700 text-sm"
+              className="w-full bg-gray-600 py-1 px-2 rounded hover:bg-gray-700 text-sm"
             >
               Sauvegarder
             </button>
