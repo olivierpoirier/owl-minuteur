@@ -14,7 +14,7 @@ export default function TimerPage() {
   const players = usePlayers(roomId);
   const currentUserId = useOwlbearPlayerId();
   const currentPlayerData = players.find((p) => p.id === currentUserId)
-  const { timer, updateTimer } = useTimerLive(roomId, players, currentUserId);
+  const { timer, updateTimer } = useTimerLive(roomId, currentPlayerData);
 
 
   useEffect(() => {
