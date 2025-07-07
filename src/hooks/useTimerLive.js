@@ -123,13 +123,13 @@ export default function useTimerLive(roomId, currentUserData) {
     if (!roomId || !timer) return;
 
     const next = {
-      timeLeft: fields.timeLeft ?? timer.timeLeft,
-      isRunning: fields.isRunning ?? timer.isRunning,
+      timeLeft: fields.timeLeft ?? timer?.timeLeft,
+      isRunning: fields.isRunning ?? timer?.isRunning,
     };
 
     const noChange =
-      next.timeLeft === timer.timeLeft &&
-      next.isRunning === timer.isRunning;
+      next.timeLeft === timer?.timeLeft &&
+      next.isRunning === timer?.isRunning;
 
     if (noChange) return;
 

@@ -16,7 +16,7 @@ export default function TimerControls({ timer, onUpdate }) {
 
   return (
     <div className="flex gap-4">
-      {timer.isRunning ? (
+      {timer?.isRunning ? (
         <button
           onClick={handlePause}
           aria-label="Pause timer"
