@@ -1,10 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from "react";
-import {
-  doc,
-  onSnapshot,
-  updateDoc,
-  serverTimestamp,
-} from "firebase/firestore";
+import { doc, onSnapshot, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import OBR from "@owlbear-rodeo/sdk";
 import { waitUntilReady } from "../utils/obrHelpers";
@@ -14,14 +9,12 @@ export default function useTimerLive(roomId) {
   const [playerId, setPlayerId] = useState(null);
   const [allPlayerIds, setAllPlayerIds] = useState([]);
   const intervalRef = useRef(null);
-  const lastSync = useRef(Date.now());
 
-  // 🧠 Le leader est le joueur avec l'ID trié le plus bas
   const isLeader = useMemo(() => {
     return playerId && allPlayerIds.length > 0 && playerId === allPlayerIds[0];
   }, [playerId, allPlayerIds]);
 
-  // 🔁 Initialisation des joueurs
+  // 🧠 Init OBR
   useEffect(() => {
     const init = async () => {
       await waitUntilReady();
@@ -43,10 +36,9 @@ export default function useTimerLive(roomId) {
     init();
   }, []);
 
-  // 📡 Écoute des changements Firestore
+  // 📡 Listen Firestore timer
   useEffect(() => {
     if (!roomId) return;
-
     const ref = doc(db, "rooms", roomId);
 
     const unsub = onSnapshot(ref, (snap) => {
@@ -55,62 +47,43 @@ export default function useTimerLive(roomId) {
       if (!t) return;
 
       setTimer(t);
-      lastSync.current = Date.now();
     });
 
     return () => unsub();
   }, [roomId]);
 
-  // ⏱️ Démarre un timer local pour tous les joueurs
+  // ⏱️ Timer loop
   useEffect(() => {
-    // conditions de démarrage
-    if (!timer || !timer.isRunning) return;
+    if (!timer?.isRunning) return;
 
     const ref = doc(db, "rooms", roomId);
 
-    // calcule le temps restant à partir du lastUpdated
-    const getTimeLeftFromServer = () => {
-      const now = Date.now();
-      const lastUpdated = timer.lastUpdated?.toMillis?.();
+    const startLoop = () => {
+      intervalRef.current = setInterval(() => {
+        setTimer((prev) => {
+          if (!prev) return prev;
+          const newTime = Math.max(0, prev.timeLeft - 1);
 
-      if (!lastUpdated) return timer.timeLeft;
-      const elapsed = Math.floor((now - lastUpdated) / 1000);
-      return Math.max(0, timer.timeLeft - elapsed);
+          // Si leader, sync vers Firestore
+          if (isLeader) {
+            updateDoc(ref, {
+              "timer.timeLeft": newTime,
+              "timer.lastUpdated": serverTimestamp(),
+              ...(newTime === 0 && { "timer.isRunning": false }),
+            });
+          }
+
+          // Mise à jour locale
+          return {
+            ...prev,
+            timeLeft: newTime,
+            ...(newTime === 0 ? { isRunning: false } : {}),
+          };
+        });
+      }, 1000);
     };
 
-    // fonction appelée toutes les secondes
-    const updateLoop = () => {
-      const newTime = getTimeLeftFromServer();
-
-      setTimer((prev) => {
-        if (!prev) return prev;
-        return { ...prev, timeLeft: newTime };
-      });
-
-      if (isLeader) {
-        if (newTime <= 0) {
-          // arrêt et sync
-          updateDoc(ref, {
-            "timer.timeLeft": 0,
-            "timer.isRunning": false,
-            "timer.lastUpdated": serverTimestamp(),
-          });
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        } else if (Date.now() - lastSync.current >= 1000) {
-          // sync 1 fois par seconde max
-          updateDoc(ref, {
-            "timer.timeLeft": newTime,
-            "timer.lastUpdated": serverTimestamp(),
-          });
-          lastSync.current = Date.now();
-        }
-      }
-    };
-
-    // démarrage du timer
-    updateLoop();
-    intervalRef.current = setInterval(updateLoop, 1000);
+    startLoop();
 
     return () => {
       if (intervalRef.current) {
@@ -118,11 +91,9 @@ export default function useTimerLive(roomId) {
         intervalRef.current = null;
       }
     };
-  }, [timer?.isRunning, timer?.lastUpdated?.toMillis?.(), isLeader, roomId]);
+  }, [timer?.isRunning, isLeader, roomId]);
 
-
-
-  // 🔄 Mise à jour manuelle du timer
+  // 🔄 Fonction manuelle
   const updateTimer = async (fields) => {
     if (!roomId || !timer) return;
 
