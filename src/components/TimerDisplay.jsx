@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { updatePlayerData } from "../utils/updatePlayerData"
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion"
@@ -23,6 +23,12 @@ export default function TimerDisplay({ timer, onUpdate, currentPlayerData, roomI
     const s = seconds % 60
     return `${m}:${s.toString().padStart(2, "0")}`
   }
+
+  useEffect(() => {
+    if (currentPlayerData?.timerColor) {
+      setCustomColor(currentPlayerData.timerColor);
+    }
+  }, [currentPlayerData?.timerColor]);
 
   const effectiveColor = customColor || currentPlayerData?.color || "var(--color-text)"
 
