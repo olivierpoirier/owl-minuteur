@@ -20,6 +20,16 @@ export default function TimerPage() {
   const { timer, updateTimer } = useTimerLive(roomId, players, currentUserId);
   const [playersTest, setPlayersTest] = useState([]);
 
+
+
+    useEffect(() => {
+    OBR.onReady(async () => {
+      const id = await OBR.player.getId();
+      const players = await OBR.party.getPlayers();
+      console.log("✅ player ID:", id);
+      console.log("🎮 Party players:", players);
+    });
+  }, []);
   useEffect(() => {
     if (roomId) {
       console.log("📦 Initialisation de la room :", roomId);

@@ -1,19 +1,15 @@
 {
-  "name": "Owl timer",
-  "version": "1.0.0",
-  "manifest_version": 1,
-  "icon": "/vite.svg",
-  "author": "Olivier Poirier",
-  "permissions": [
-    { "name": "party" },
-    { "name": "player" },
-    { "name": "scene" }
-  ],
-  "action": {
-    "title": "Owl timer",
+    "name": "Owl timer",
+    "version": "1.0.0",
+    "manifest_version": 1,
     "icon": "/vite.svg",
-    "popover": "/",
-    "height": 650,
-    "width": 425
-  }
+    "author": "Olivier Poirier",
+    "action": {
+      "title": "Owl timer",
+      "icon": "/vite.svg",
+      "popover": "/",
+      "height": 650,
+      "width": 425
+    }
 }
+  
