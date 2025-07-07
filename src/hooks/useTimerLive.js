@@ -63,65 +63,57 @@ export default function useTimerLive(roomId) {
 
   // ⏱️ Démarre un timer local pour tous les joueurs
   useEffect(() => {
-    if (!timer || !timer?.isRunning) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-      return;
-    }
+    if (!timer?.isRunning) return;
 
     const ref = doc(db, "rooms", roomId);
 
     const getTimeLeftFromServer = () => {
       const now = Date.now();
-      const lastUpdated = timer?.lastUpdated?.toMillis?.();
+      const lastUpdated = timer.lastUpdated?.toMillis?.();
 
-      if (!lastUpdated) {
-        // 🔰 Fallback si le champ n'existe pas encore dans Firestore
-        return timer?.timeLeft;
-      }
-
+      if (!lastUpdated) return timer.timeLeft;
       const elapsed = Math.floor((now - lastUpdated) / 1000);
-      return Math.max(0, timer?.timeLeft - elapsed);
+      return Math.max(0, timer.timeLeft - elapsed);
     };
 
     const updateLoop = () => {
+      const newTime = getTimeLeftFromServer();
+
       setTimer((prev) => {
-        if (!prev || typeof prev?.timeLeft !== "number") return prev;
-
-        const newTime = getTimeLeftFromServer();
-
-        if (isLeader) {
-          if (newTime <= 0) {
-            updateDoc(ref, {
-              "timer.timeLeft": 0,
-              "timer.isRunning": false,
-              "timer.lastUpdated": serverTimestamp(),
-            });
-            clearInterval(intervalRef.current);
-            return { ...prev, timeLeft: 0, isRunning: false };
-          }
-
-          if (Date.now() - lastSync?.current >= 1000) {
-            updateDoc(ref, {
-              "timer.timeLeft": newTime,
-              "timer.lastUpdated": serverTimestamp(),
-            });
-            lastSync.current = Date.now();
-          }
-        }
-
+        if (!prev) return prev;
         return { ...prev, timeLeft: newTime };
       });
+
+      if (isLeader) {
+        if (newTime <= 0) {
+          updateDoc(ref, {
+            "timer.timeLeft": 0,
+            "timer.isRunning": false,
+            "timer.lastUpdated": serverTimestamp(),
+          });
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        } else if (Date.now() - lastSync.current >= 1000) {
+          updateDoc(ref, {
+            "timer.timeLeft": newTime,
+            "timer.lastUpdated": serverTimestamp(),
+          });
+          lastSync.current = Date.now();
+        }
+      }
     };
 
-    updateLoop(); // Appel immédiat
+    updateLoop(); // immédiat
     intervalRef.current = setInterval(updateLoop, 1000);
 
     return () => {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
-  }, [timer?.isRunning, isLeader, timer?.lastUpdated, timer, roomId]);
+  }, [timer?.isRunning, isLeader, roomId]);
+
 
   // 🔄 Mise à jour manuelle du timer
   const updateTimer = async (fields) => {
