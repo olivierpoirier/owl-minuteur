@@ -7,50 +7,20 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import OBR from "@owlbear-rodeo/sdk";
-import { waitUntilReady } from "../utils/obrHelpers";
 
-export default function useTimerLive(roomId) {
+export default function useTimerLive(roomId, players, currentUserId) {
   const [timer, setTimer] = useState(null);
-  const [playerId, setPlayerId] = useState(null);
-  const [allPlayerIds, setAllPlayerIds] = useState([]);
   const intervalRef = useRef(null);
   const lastSync = useRef(Date.now());
   const isLeader = useMemo(() => {
-    return playerId && allPlayerIds.length > 0 && playerId === allPlayerIds[0];
-  }, [playerId, allPlayerIds]);
+    const allPlayerIds = players.map((p) => p.id).sort()
+    return currentUserId && allPlayerIds.length > 0 && currentUserId === allPlayerIds[0];
+  }, [players, currentUserId]);
 
-  console.log("PlayerId",playerId);
-  console.log("PLAYERS", allPlayerIds);
-
-
-  
-  
   useEffect(() => {
-    console.log("📡 Players connected:", allPlayerIds);
+    console.log("📡 Players connected:", players);
     console.log("🎖️ I am leader:", isLeader);
-  }, [allPlayerIds, isLeader]);
-
-  // 🔁 Initialiser playerId + rôle
-  useEffect(() => {
-    const init = async () => {
-      await waitUntilReady();
-      const id = await OBR.player.getId();
-      setPlayerId(id);
-
-      // 🔄 Écouter les autres joueurs pour élire un leader
-      OBR.party.onChange((players) => {
-        const ids = players.map((p) => p.id).sort(); // Triés pour désigner un leader
-        setAllPlayerIds(ids);
-      });
-
-      const players = await OBR.party.getPlayers();
-        console.log("OWLBÉEAR PLAYERS", players);
-      setAllPlayerIds(players.map((p) => p.id).sort());
-    };
-
-    init();
-  }, []);
+  }, [isLeader, players]);
 
   useEffect(() => {
     if (!roomId) return;
@@ -140,8 +110,6 @@ export default function useTimerLive(roomId) {
 
   return {
     timer,
-    updateTimer,
-    isLeader,
-    playerId,
+    updateTimer
   };
 }

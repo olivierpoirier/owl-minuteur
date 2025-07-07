@@ -10,10 +10,11 @@ import usePlayers from "./hooks/usePlayers";
 
 export default function TimerPage() {
   let roomId = useRoomId();
-  const { timer, updateTimer } = useTimerLive(roomId);
+
   const players = usePlayers(roomId);
   const currentUserId = useOwlbearPlayerId();
   const currentPlayerData = players.find((p) => p.id === currentUserId)
+  const { timer, updateTimer } = useTimerLive(roomId, players, currentUserId);
 
 
   useEffect(() => {
