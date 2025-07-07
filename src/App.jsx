@@ -9,6 +9,7 @@ import useOwlbearPlayerId from "./hooks/useOwlbearPlayerId";
 import usePlayers from "./hooks/usePlayers";
 import OBR from "@owlbear-rodeo/sdk";
 import { use } from "framer-motion/m";
+import { waitUntilReady } from "./utils/obrHelpers";
 
 export default function TimerPage() {
   let roomId = useRoomId();
@@ -33,19 +34,17 @@ export default function TimerPage() {
     
   }, [playersTest]);
 
+  OBR.onReady(async () => {
+    const partyPlayers = await OBR.party.getPlayers();
+    console.log("☕ PLAYERS", partyPlayers);
+  });
+
+
   useEffect(() => {
-    try {
-      OBR.onReady(() => {
-        const partyPlayers = OBR.party.getPlayers()
-        console.log("☕ PLAYERS", partyPlayers);
-        
-      });
-    } catch (error) {
-      console.error("Erreur OBR Ready :", error);
-    }
+    waitUntilReady().then(() => {
+      console.log("✅ OBR prêt !");
+    });
   }, []);
-
-
 
     useEffect(() => {
     let unsubscribe = null;

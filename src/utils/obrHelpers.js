@@ -2,11 +2,16 @@
 import OBR from "@owlbear-rodeo/sdk";
 
 /**
- * Attendre que OBR soit prêt, peu importe si on appelle après ou avant l'initialisation
+ * Garantit que OBR est prêt, même si on appelle avant que l'extension ait terminé d'initialiser.
  */
 export function waitUntilReady() {
-  if (OBR.isReady) return Promise.resolve();
   return new Promise((resolve) => {
-    OBR.onReady(resolve);
+    if (OBR.isReady) {
+      resolve();
+    } else {
+      OBR.onReady(() => {
+        resolve();
+      });
+    }
   });
 }
