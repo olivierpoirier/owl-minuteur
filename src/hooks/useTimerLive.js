@@ -1,4 +1,3 @@
-// ✅ useTimerLive.js
 import { useEffect, useState, useRef, useMemo } from "react";
 import {
   doc,
@@ -7,20 +6,49 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import OBR from "@owlbear-rodeo/sdk";
+import { waitUntilReady } from "../utils/obrHelpers";
 
-export default function useTimerLive(roomId, players, currentUserId) {
+export default function useTimerLive(roomId) {
   const [timer, setTimer] = useState(null);
+  const [playerId, setPlayerId] = useState(null);
+  const [allPlayerIds, setAllPlayerIds] = useState([]);
   const intervalRef = useRef(null);
   const lastSync = useRef(Date.now());
+
+  // 🧠 Leader = le joueur avec l'ID le plus bas (trié)
   const isLeader = useMemo(() => {
-    const allPlayerIds = players.map((p) => p.id).sort()
-    return currentUserId && allPlayerIds.length > 0 && currentUserId === allPlayerIds[0];
-  }, [players, currentUserId]);
+    return playerId && allPlayerIds.length > 0 && playerId === allPlayerIds[0];
+  }, [playerId, allPlayerIds]);
 
   useEffect(() => {
-    console.log("📡 Players connected:", players);
+    console.log("📡 Players connected (incluant moi):", allPlayerIds);
     console.log("🎖️ I am leader:", isLeader);
-  }, [isLeader, players]);
+  }, [allPlayerIds, isLeader]);
+
+  // 🔁 Initialiser playerId + liste complète des joueurs (avec moi)
+  useEffect(() => {
+    const init = async () => {
+      await waitUntilReady();
+
+      const id = await OBR.player.getId();
+      setPlayerId(id);
+
+      const self = { id };
+      const others = await OBR.party.getPlayers();
+      const combined = [...others, self];
+
+      setAllPlayerIds(combined.map((p) => p.id).sort());
+
+      // 🔄 Met à jour la liste des joueurs à chaque changement
+      OBR.party.onChange(async (updatedPlayers) => {
+        const everyone = [...updatedPlayers, { id }];
+        setAllPlayerIds(everyone.map((p) => p.id).sort());
+      });
+    };
+
+    init();
+  }, []);
 
   useEffect(() => {
     if (!roomId) return;
@@ -110,6 +138,9 @@ export default function useTimerLive(roomId, players, currentUserId) {
 
   return {
     timer,
-    updateTimer
+    updateTimer,
+    isLeader,
+    playerId,
+    allPlayerIds,
   };
 }
