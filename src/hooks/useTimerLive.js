@@ -63,10 +63,12 @@ export default function useTimerLive(roomId) {
 
   // ⏱️ Démarre un timer local pour tous les joueurs
   useEffect(() => {
-    if (!timer?.isRunning) return;
+    // conditions de démarrage
+    if (!timer || !timer.isRunning) return;
 
     const ref = doc(db, "rooms", roomId);
 
+    // calcule le temps restant à partir du lastUpdated
     const getTimeLeftFromServer = () => {
       const now = Date.now();
       const lastUpdated = timer.lastUpdated?.toMillis?.();
@@ -76,6 +78,7 @@ export default function useTimerLive(roomId) {
       return Math.max(0, timer.timeLeft - elapsed);
     };
 
+    // fonction appelée toutes les secondes
     const updateLoop = () => {
       const newTime = getTimeLeftFromServer();
 
@@ -86,6 +89,7 @@ export default function useTimerLive(roomId) {
 
       if (isLeader) {
         if (newTime <= 0) {
+          // arrêt et sync
           updateDoc(ref, {
             "timer.timeLeft": 0,
             "timer.isRunning": false,
@@ -94,6 +98,7 @@ export default function useTimerLive(roomId) {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
         } else if (Date.now() - lastSync.current >= 1000) {
+          // sync 1 fois par seconde max
           updateDoc(ref, {
             "timer.timeLeft": newTime,
             "timer.lastUpdated": serverTimestamp(),
@@ -103,7 +108,8 @@ export default function useTimerLive(roomId) {
       }
     };
 
-    updateLoop(); // immédiat
+    // démarrage du timer
+    updateLoop();
     intervalRef.current = setInterval(updateLoop, 1000);
 
     return () => {
@@ -112,7 +118,8 @@ export default function useTimerLive(roomId) {
         intervalRef.current = null;
       }
     };
-  }, [timer?.isRunning, isLeader, roomId]);
+  }, [timer?.isRunning, timer?.lastUpdated?.toMillis?.(), isLeader, roomId]);
+
 
 
   // 🔄 Mise à jour manuelle du timer
