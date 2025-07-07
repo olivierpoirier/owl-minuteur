@@ -37,7 +37,7 @@ export default function TimerDisplay({ timer, onUpdate, currentPlayerData, roomI
       className="flex flex-col rounded-xl shadow p-6 items-center justify-center gap-4 mt-8 w-full bg-[var(--color-bg)] relative"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      style={{ boxShadow: `0 0 12px ${effectiveColor}` }}
+      style={{ boxShadow: `0 0 12px ${currentPlayerData?.color || "var(--color-text)"}` }}
     >
       {/* ⚙️ Icône engrenage */}
       <button
