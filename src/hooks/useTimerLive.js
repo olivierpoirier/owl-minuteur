@@ -8,7 +8,6 @@ export default function useTimerLive(roomId) {
   const [timer, setTimer] = useState(null);
   const [playerId, setPlayerId] = useState(null);
   const [allPlayerIds, setAllPlayerIds] = useState([]);
-  const [displayTimeLeft, setDisplayTimeLeft] = useState(null);
   const intervalRef = useRef(null);
 
   const isLeader = useMemo(() => {
@@ -53,53 +52,58 @@ export default function useTimerLive(roomId) {
     return () => unsub();
   }, [roomId]);
 
-  // 🎯 Calcule du temps restant
+  // ⏱️ Timer loop
   useEffect(() => {
-    if (!timer?.isRunning) {
-      setDisplayTimeLeft(timer?.timeLeft ?? null);
-      return;
-    }
+    if (!timer?.isRunning) return;
 
-    const getElapsed = () => {
-      const now = Date.now();
-      const last = timer.lastUpdated?.toMillis?.();
-      if (!last) return 0;
-      return Math.floor((now - last) / 1000);
+    const ref = doc(db, "rooms", roomId);
+
+    const startLoop = () => {
+      intervalRef.current = setInterval(() => {
+        setTimer((prev) => {
+          if (!prev) return prev;
+          const newTime = Math.max(0, prev.timeLeft - 1);
+
+          // Si leader, sync vers Firestore
+          if (isLeader) {
+            updateDoc(ref, {
+              "timer.timeLeft": newTime,
+              "timer.lastUpdated": serverTimestamp(),
+              ...(newTime === 0 && { "timer.isRunning": false }),
+            });
+          }
+
+          // Mise à jour locale
+          return {
+            ...prev,
+            timeLeft: newTime,
+            ...(newTime === 0 ? { isRunning: false } : {}),
+          };
+        });
+      }, 1000);
     };
 
-    const tick = () => {
-      const elapsed = getElapsed();
-      const newTime = Math.max(0, timer.timeLeft - elapsed);
+    startLoop();
 
-      if (isLeader) {
-        const ref = doc(db, "rooms", roomId);
-
-        if (newTime <= 0) {
-          updateDoc(ref, {
-            "timer.timeLeft": 0,
-            "timer.isRunning": false,
-            "timer.lastUpdated": serverTimestamp(),
-          });
-        } else {
-          updateDoc(ref, {
-            "timer.timeLeft": newTime,
-            "timer.lastUpdated": serverTimestamp(),
-          });
-        }
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
-
-      setDisplayTimeLeft(newTime);
     };
+  }, [timer?.isRunning, isLeader, roomId]);
 
-    tick(); // immédiat
-    intervalRef.current = setInterval(tick, 1000);
-
-    return () => clearInterval(intervalRef.current);
-  }, [timer?.isRunning, isLeader, timer?.timeLeft, timer?.lastUpdated, roomId]);
-
-  // 🛠️ Fonction de mise à jour manuelle
+  // 🔄 Fonction manuelle
   const updateTimer = async (fields) => {
     if (!roomId || !timer) return;
+
+    const next = {
+      timeLeft: fields.timeLeft ?? timer.timeLeft,
+      isRunning: fields.isRunning ?? timer.isRunning,
+    };
+
+    const noChange = next.timeLeft === timer.timeLeft && next.isRunning === timer.isRunning;
+    if (noChange) return;
 
     const ref = doc(db, "rooms", roomId);
     const dotFields = Object.fromEntries(
@@ -114,7 +118,6 @@ export default function useTimerLive(roomId) {
 
   return {
     timer,
-    displayTimeLeft,
     updateTimer,
     isLeader,
     playerId,
