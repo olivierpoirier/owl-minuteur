@@ -43,7 +43,7 @@ export default function TimerDisplay({ timer, onUpdate, currentPlayerData, roomI
       <button
         className="absolute top-2 right-2"
         style={{
-          color:effectiveColor
+          color:currentPlayerData?.color || "var(--color-text)"
         }}
         onClick={() => setShowSettings((prev) => !prev)}
       >
