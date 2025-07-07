@@ -1,5 +1,7 @@
 import { useState } from "react"
 import { updatePlayerData } from "../utils/updatePlayerData" // adapte selon ton chemin
+// eslint-disable-next-line no-unused-vars
+import { motion } from "framer-motion";
 
 export default function TimerDisplay({ timer, onUpdate, currentPlayerData, roomId }) {
   const [showSettings, setShowSettings] = useState(false)
