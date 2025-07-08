@@ -2,11 +2,11 @@
     "name": "Owl timer",
     "version": "1.0.0",
     "manifest_version": 1,
-    "icon": "/vite.svg",
+    "icon": "/iconExtension.png",
     "author": "Olivier Poirier",
     "action": {
       "title": "Owl timer",
-      "icon": "/vite.svg",
+      "icon": "/icon.png",
       "popover": "/",
       "height": 650,
       "width": 425
