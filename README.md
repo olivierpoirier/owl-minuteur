@@ -40,3 +40,49 @@ Each player can view the countdown, personalize their experience (text color, al
 ```bash
 npm install
 npm run dev
+```
+
+## 🧱 Stack Technique / Tech Stack
+
+- ⚛️ **React 19 + Vite**
+- 🧠 **Firebase Firestore**
+- 💅 **Tailwind CSS**
+- 🌀 **Framer Motion**
+- 🎧 **HTML5 Audio**
+- 🎲 **Owlbear Rodeo SDK v3**
+
+---
+
+## 📸 Captures d’écran / Screenshots
+
+<img width="520" height="738" alt="image" src="https://github.com/user-attachments/assets/656aaa03-ee90-4748-94ce-4ebd1dcee4e3" />
+
+<img width="533" height="748" alt="image" src="https://github.com/user-attachments/assets/3433e161-1780-487b-88d9-f07fa2ae10d4" />
+
+<img width="409" height="627" alt="image" src="https://github.com/user-attachments/assets/08ebc1db-a8c3-458a-94a8-526d614d4ee4" />
+
+
+---
+
+## ⚙️ Détails Techniques / Technical Details
+
+### 🇫🇷
+
+- 👑 Détection du GM automatique via `player.role === "GM"`
+- 🔐 Le GM seul contrôle le vrai décompte dans Firestore
+- 💡 Inactivité détectée après 5 minutes (passage automatique dans les inactifs)
+- 🎛️ Drag & drop entre les groupes : *En jeu*, *En attente*, *Inactif*
+- 📡 Temps synchronisé avec `serverTimestamp()` pour fiabilité
+- 🎨 Chaque joueur peut choisir une couleur de texte et un son d'alarme
+- 🔁 Synchronisation automatique si nom, couleur ou rôle change
+
+### 🇬🇧
+
+- 👑 Automatic GM detection via `player.role === "GM"`
+- 🔐 Only the GM can update the true countdown in Firestore
+- 💡 Inactivity is detected after 5 minutes (auto-switch to "Inactive")
+- 🎛️ Drag & drop between groups: *Playing*, *Waiting*, *Inactive*
+- 📡 Time is synchronized using `serverTimestamp()` for consistency
+- 🎨 Each player can choose their own text color and alarm sound
+- 🔁 Auto re-sync when name, color, or role changes
+
