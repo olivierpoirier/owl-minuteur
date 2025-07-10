@@ -35,6 +35,37 @@ Each player can view the countdown, personalize their experience (text color, al
 
 ## 🚀 Comment utiliser / How to Use
 
+
+## 🧪 Intégration Owlbear / Owlbear Integration
+
+### 🇫🇷 Ajouter l’extension sur votre carte Owlbear
+
+1. Ouvrez [Owlbear Rodeo 2.0](https://www.owlbear.rodeo/)
+2. Ouvrez une **carte** ou créez-en une nouvelle
+3. Cliquez sur l’icône **Puzzle** en bas à gauche (Extensions)
+4. Cliquez sur le + **Add Custom Extension** en haut à droite
+5. Collez l’URL suivante : https://owl-timer.vercel.app/manifest.json
+6. Cliquez sur **Ajouter**
+7. L’application **Owlbear Minuteur** apparaîtra dans vos extensions disponibles
+
+> ⚠️ Si vous testez en local, vous pouvez utiliser `http://localhost:5173/manifest.json`
+
+---
+
+### 🇬🇧 Add the extension to your Owlbear map
+
+1. Go to [Owlbear Rodeo 2.0](https://www.owlbear.rodeo/)
+2. Open a **scene** or create a new one
+3. Click the **Puzzle icon** at the bottom left (Extensions)
+4. Click on the + **Add Custom Extension** on the upper right
+5. Paste the following URL: https://owl-timer.vercel.app/manifest.json
+6. Click **Add**
+7. The **Owlbear Timer** app will now be available in your extension panel
+
+> ⚠️ If you're testing locally, you can use `http://localhost:5173/manifest.json`
+
+---
+
 ### 🧪 En local (développement)
 
 ```bash
