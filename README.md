@@ -3,6 +3,7 @@
 ### 🇬🇧 Collaborative timer for Owlbear Rodeo  
 
 ---
+<img width="1102" height="810" alt="image" src="https://github.com/user-attachments/assets/b2d69fff-fe8d-470a-9e3c-49b49c52c985" />
 
 ## 🇫🇷 Présentation
 
